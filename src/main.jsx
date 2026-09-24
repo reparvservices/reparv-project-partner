@@ -7,7 +7,6 @@ import { AuthProvider } from "./store/auth.jsx";
 import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 
-// Create a root and render the application
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
