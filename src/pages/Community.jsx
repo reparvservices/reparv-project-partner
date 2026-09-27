@@ -989,7 +989,7 @@ function UpcomingEvents() {
   // ── API ─────────────────────────────────────────────────────
   const fetchMeetings = useCallback(async () => {
     try {
-      const res = await fetch(`${URI}/calender/meetings`, {
+      const res = await fetch(`${URI}/project-partner/calender/meetings`, {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });

@@ -31,7 +31,6 @@ const PartnersPage = lazy(
   () => import("./components/partnerPageUpdated/PartnersPage"),
 );
 import PaymentSuccessModal from "./components/pricingPages/PaymentSuccessModal";
-import PartnerRegistrationPage from "./pages/PartnerRegistration";
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const AccountCancellation = lazy(() => import("./pages/AccountCancellation"));
@@ -174,7 +173,6 @@ const App = () => (
       <Route path="/" element={<LayoutTwo />}>
         <Route index element={<PartnerPage />} />
         <Route path="partners" element={<PartnersPage />} />
-        <Route path="/partner-registration" element={<PartnerRegistrationPage />} />
         <Route path="/paymentSuccess" element={<PaymentSuccessModal />} />
         <Route path="privacy-policy" element={<PrivacyPolicy />} />
         <Route path="terms-and-conditions" element={<TermsAndConditions />} />

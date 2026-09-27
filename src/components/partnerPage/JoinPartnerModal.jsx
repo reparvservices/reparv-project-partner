@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FiArrowRight,
   FiCheck,
@@ -108,12 +108,21 @@ function OtpInputs({ value, onChange, disabled }) {
   );
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
+
 export default function JoinPartnerModal({ isOpen, onClose }) {
   const { URI } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState("phone");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  // Sign-in details: partners log in with email (or username) + password
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -126,6 +135,10 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
     setFirstName("");
     setLastName("");
     setPhone("");
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
     setOtp("");
     setError("");
     setSuccessMessage("");
@@ -168,11 +181,23 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
       setError("Enter a valid 10-digit WhatsApp number");
       return;
     }
+    if (!EMAIL_RE.test(email.trim())) {
+      setError("Enter a valid email address");
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
 
     setLoading(true);
     setError("");
     try {
-      await sendPartnerJoinOtp(URI, normalized);
+      await sendPartnerJoinOtp(URI, normalized, email.trim().toLowerCase());
       setPhone(normalized);
       setOtp("");
       setStep("otp");
@@ -189,7 +214,7 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
     setLoading(true);
     setError("");
     try {
-      await sendPartnerJoinOtp(URI, phone);
+      await sendPartnerJoinOtp(URI, phone, email.trim().toLowerCase());
       setResendIn(RESEND_SECONDS);
     } catch (e) {
       setError(e.message || "Could not resend OTP");
@@ -212,10 +237,12 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
         lastName: lastName.trim(),
         phone,
         otp,
+        email: email.trim().toLowerCase(),
+        password,
       });
       setSuccessMessage(
         result.message ||
-          "Check WhatsApp for the app link to complete your registration.",
+          "Your partner account is ready. Log in with your email and password.",
       );
       setWhatsappSent(result.whatsappSent !== false);
       setStep("success");
@@ -331,6 +358,58 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
                 </div>
               </div>
 
+              <div className="mt-3 sm:mt-4">
+                <label className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  Email (used to log in)
+                </label>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1.5 sm:mt-2 w-full rounded-xl sm:rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#5E23DC] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5E23DC]/15"
+                />
+              </div>
+
+              <div className="mt-3 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    Password
+                  </label>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="mt-1.5 sm:mt-2 w-full rounded-xl sm:rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#5E23DC] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5E23DC]/15"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    Confirm password
+                  </label>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="mt-1.5 sm:mt-2 w-full rounded-xl sm:rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#5E23DC] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5E23DC]/15"
+                  />
+                </div>
+              </div>
+              <label className="mt-2 inline-flex items-center gap-2 text-xs text-gray-500 select-none">
+                <input
+                  type="checkbox"
+                  checked={showPassword}
+                  onChange={(e) => setShowPassword(e.target.checked)}
+                  className="accent-[#5E23DC]"
+                />
+                Show password
+              </label>
+
               {error ? (
                 <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-red-600">{error}</p>
               ) : null}
@@ -342,7 +421,10 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
                   loading ||
                   !firstName.trim() ||
                   !lastName.trim() ||
-                  phone.length !== 10
+                  phone.length !== 10 ||
+                  !email.trim() ||
+                  !password ||
+                  !confirmPassword
                 }
                 className="mt-4 sm:mt-6 flex w-full items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-[#5E23DC] px-4 py-3 sm:px-6 sm:py-3.5 text-sm font-semibold text-white transition hover:bg-[#4b1cc0] disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -491,20 +573,23 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
             </div>
           ) : (
             <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2.5 text-xs sm:text-sm text-amber-900">
-              Details saved. WhatsApp could not be sent — try again later.
+              Account created. The WhatsApp app link could not be sent — you can still log in on the web.
             </div>
           )}
 
           <p className="mt-3 text-center text-[10px] sm:text-xs text-gray-500">
-            Tap <strong>Download App</strong> in WhatsApp to complete registration.
+            Log in with <strong>{email.trim().toLowerCase()}</strong> and the password you chose.
           </p>
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              onClose();
+              navigate("/login");
+            }}
             className="mt-4 sm:mt-6 flex w-full items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-[#5E23DC] px-4 py-3 sm:py-3.5 text-sm font-semibold text-white transition hover:bg-[#4b1cc0]"
           >
-            Done
+            Log in now
           </button>
         </div>
       )}

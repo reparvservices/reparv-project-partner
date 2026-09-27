@@ -35,7 +35,7 @@ export default function UpdateSalesPartner() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${URI}/project-partner/sales-persons/${id}`, { method: "GET", credentials: "include", headers: { "Content-Type": "application/json" } });
+        const res = await fetch(`${URI}/project-partner/sales/${id}`, { method: "GET", credentials: "include", headers: { "Content-Type": "application/json" } });
         if (!res.ok) throw new Error();
         setForm(await res.json());
       } catch (e) { console.error(e); alert("Failed to load partner."); navigate("/app/sales-partners"); }
@@ -84,7 +84,7 @@ export default function UpdateSalesPartner() {
     if (!validate()) return;
     setLoading(true);
     try {
-      const res = await fetch(`${URI}/project-partner/sales-persons/edit/${id}`, {
+      const res = await fetch(`${URI}/project-partner/sales/edit/${id}`, {
         method: "PUT", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

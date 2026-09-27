@@ -724,7 +724,7 @@ export default function EditProfile() {
 
     try {
       setLoading(true);
-      const r = await fetch(`${URI}/${getBasePath()}/profile/v2/edit`, {
+      const r = await fetch(`${URI}${getBasePath()}/profile/v2/edit`, {
         method: "PUT",
         credentials: "include",
         body: fd,
@@ -748,7 +748,7 @@ export default function EditProfile() {
     }
     try {
       setLoading(true);
-      const r = await fetch(`${URI}/${getBasePath()}/profile/changepassword`, {
+      const r = await fetch(`${URI}${getBasePath()}/profile/changepassword`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

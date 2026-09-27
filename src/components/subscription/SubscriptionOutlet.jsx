@@ -1,10 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../store/auth";
-import {
-  getFeatureTitleForPath,
-  isSubscriptionExemptPath,
-} from "../../lib/subscriptionLock";
+import { getFeatureTitleForPath, getLockState } from "../../lib/subscriptionLock";
 import SubscriptionGate from "./SubscriptionGate";
 
 function GateLoader() {
@@ -15,10 +12,12 @@ function GateLoader() {
   );
 }
 
-/** Renders child routes; blurs and locks them when subscription is inactive. */
+/**
+ * Renders child routes; blurs and locks a page when the partner has no plan,
+ * or their plan doesn't include the feature that page needs.
+ */
 export default function SubscriptionOutlet() {
-  const { subscription, subscriptionReady, isActiveSubscription, refreshSubscription } =
-    useAuth();
+  const { subscription, subscriptionReady, refreshSubscription, role } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -29,16 +28,17 @@ export default function SubscriptionOutlet() {
     return <GateLoader />;
   }
 
-  const exempt = isSubscriptionExemptPath(location.pathname);
-  const hasAccess = Boolean(subscription?.active || isActiveSubscription);
-  const locked = !hasAccess && !exempt;
-
-  if (!locked) {
+  const lock = getLockState(subscription, location.pathname, role);
+  if (!lock.locked) {
     return <Outlet />;
   }
 
   return (
-    <SubscriptionGate title={getFeatureTitleForPath(location.pathname)}>
+    <SubscriptionGate
+      title={getFeatureTitleForPath(location.pathname)}
+      reason={lock.reason}
+      feature={lock.feature}
+    >
       <Outlet />
     </SubscriptionGate>
   );

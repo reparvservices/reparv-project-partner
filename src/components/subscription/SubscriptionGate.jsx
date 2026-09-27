@@ -11,7 +11,10 @@ export default function SubscriptionGate({
   children,
   title = "this feature",
   className = "",
+  reason = "subscribe", // "subscribe" = no active plan, "upgrade" = plan lacks the feature
+  feature = "",
 }) {
+  const isUpgrade = reason === "upgrade";
   const navigate = useNavigate();
 
   return (
@@ -44,11 +47,12 @@ export default function SubscriptionGate({
           </span>
 
           <h2 className="text-lg font-bold text-gray-900 leading-snug">
-            Subscribe to unlock {title}
+            {isUpgrade ? `Upgrade to unlock ${title}` : `Subscribe to unlock ${title}`}
           </h2>
           <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-            Choose a plan to access the full partner panel — dashboard, properties,
-            enquiries, and autopay billing.
+            {isUpgrade
+              ? `Your current plan doesn't include ${feature ? `"${feature}"` : "this feature"}. Choose a plan that includes it.`
+              : `Choose a plan${feature ? ` with "${feature}"` : ""} to use this part of the partner panel.`}
           </p>
 
           <button
@@ -60,7 +64,7 @@ export default function SubscriptionGate({
             }}
           >
             <Crown size={16} />
-            Subscribe to unlock
+            {isUpgrade ? "Upgrade plan" : "Subscribe to unlock"}
           </button>
         </div>
       </div>

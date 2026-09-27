@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { hasFeature, PARTNER_FEATURES } from "../../lib/subscriptionLock";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../store/auth";
 import { uploadToS3 } from "../../utils/s3";
@@ -34,7 +35,7 @@ const REQUIRED = [
 
 export default function AddProperty() {
   const navigate = useNavigate();
-  const { URI, setLoading } = useAuth();
+  const { URI, setLoading, refreshSubscription } = useAuth();
 
   const [propertyTab, setPropertyTab] = useState("new");
   const [form, setForm]               = useState(EMPTY_FORM);
@@ -91,11 +92,30 @@ export default function AddProperty() {
     })();
   }, [form.state]);
 
+  // Publishing needs an active plan (server answers 402 SUBSCRIPTION_REQUIRED otherwise)
+  const askToSubscribe = (message) => {
+    const go = window.confirm(
+      `${message || "An active subscription is required to publish properties."}\n\nOpen the Subscription page to start a plan or free trial?`,
+    );
+    if (go) navigate("/app/subscription");
+  };
+
   const handleSubmit = async (e) => {
     e?.preventDefault();
     if (!canPublish) return;
     setLoading(true);
     try {
+      // Check the plan before uploading photos, so nothing is uploaded for nothing
+      const sub = await refreshSubscription?.(undefined, { silent: true });
+      if (sub && sub.active === false) {
+        askToSubscribe("Your account doesn't have an active subscription, so the property can't be published yet.");
+        return;
+      }
+      if (sub && !hasFeature(sub, PARTNER_FEATURES.PROPERTIES)) {
+        askToSubscribe(`Your plan doesn't include "${PARTNER_FEATURES.PROPERTIES}". Upgrade your plan to publish properties.`);
+        return;
+      }
+
       const payload = { ...form };
       for (const field of Object.keys(EMPTY_IMAGES)) {
         if (imageFiles[field]?.length > 0) {
@@ -109,12 +129,14 @@ export default function AddProperty() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (res.status === 409) { alert((await res.json()).message || "Property already exists!"); return; }
-      if (!res.ok) throw new Error(`Status: ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 402 || data.code === "SUBSCRIPTION_REQUIRED" || data.code === "FEATURE_LOCKED") { askToSubscribe(data.message); return; }
+      if (res.status === 409) { alert(data.message || "Property already exists!"); return; }
+      if (!res.ok) throw new Error(data.message || `Could not publish (status ${res.status})`);
       alert("Property added successfully!");
       setForm(EMPTY_FORM); setImageFiles(EMPTY_IMAGES);
       navigate("/app/properties");
-    } catch (e) { console.error(e); alert("Please check all fields and try again."); }
+    } catch (e) { console.error(e); alert(e.message || "Please check all fields and try again."); }
     finally { setLoading(false); }
   };
 

@@ -6,6 +6,7 @@ import ProfileHeader from "../../components/profile/ProfileHeader";
 import PostsGrid from "../../components/profile/PostsGrid";
 import SuggestedPartners from "../../components/profile/SuggestedPartners";
 import PlatformUpdates from "../../components/profile/PlatformUpdates";
+import ProfileCompletion from "../../components/profile/ProfileCompletion";
 
 export default function Profile() {
   const { URI, setLoading, role } = useAuth();
@@ -142,6 +143,13 @@ export default function Profile() {
       <div className="max-w-[1400px] mx-auto grid grid-cols-1 xl:grid-cols-[1fr_300px]">
         {/* Main */}
         <div className="w-full bg-white p-4 sm:p-8 sm:pr-0 shadow-sm sm:border-r">
+          {isProjectPartner && !fetching ? (
+            <ProfileCompletion
+              key={user?.updated_at || user?.id}
+              user={user}
+              onSaved={fetchProfile}
+            />
+          ) : null}
           <ProfileHeader
             user={user}
             loading={fetching}

@@ -1,8 +1,9 @@
 import { useAuth } from "../store/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { NavLink } from "react-router-dom";
-import { Outlet } from "react-router-dom";
-//import SubscriptionOutlet from "../components/subscription/SubscriptionOutlet";
+import SubscriptionOutlet from "../components/subscription/SubscriptionOutlet";
+import { getLockState } from "../lib/subscriptionLock";
+import { FiLock } from "react-icons/fi";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import reparvMainLogo from "../assets/layout/reparvMainLogo.svg";
@@ -33,7 +34,9 @@ import {
 
 export default function Layout() {
   const navigate = useNavigate();
-  const { logout, role, user } = useAuth();
+  const { logout, role, user, subscription } = useAuth();
+  // Lock icon for menu items the partner's plan doesn't unlock
+  const isLocked = (to) => getLockState(subscription, to, role).locked;
   const { moreOpen, setMoreOpen } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -141,6 +144,9 @@ export default function Layout() {
             >
               {item.icon}
               {item.label}
+              {isLocked(item.to) ? (
+                <FiLock size={13} className="ml-auto opacity-70" aria-label="Locked" />
+              ) : null}
             </NavLink>
           ))}
         </nav>
@@ -158,6 +164,9 @@ export default function Layout() {
               >
                 {item.icon}
                 {item.label}
+                {isLocked(item.to) ? (
+                  <FiLock size={13} className="ml-auto opacity-70" aria-label="Locked" />
+                ) : null}
               </NavLink>
             ))}
         </nav>
@@ -173,6 +182,9 @@ export default function Layout() {
             >
               {item.icon}
               {item.label}
+              {isLocked(item.to) ? (
+                <FiLock size={13} className="ml-auto opacity-70" aria-label="Locked" />
+              ) : null}
             </NavLink>
           ))}
         </nav>
@@ -218,6 +230,9 @@ export default function Layout() {
                   >
                     {item.icon}
                     {item.label}
+                    {isLocked(item.to) ? (
+                      <FiLock size={13} className="ml-auto opacity-70" aria-label="Locked" />
+                    ) : null}
                   </NavLink>
                 ))}
               </nav>
@@ -235,6 +250,9 @@ export default function Layout() {
                     >
                       {item.icon}
                       {item.label}
+                      {isLocked(item.to) ? (
+                        <FiLock size={13} className="ml-auto opacity-70" aria-label="Locked" />
+                      ) : null}
                     </NavLink>
                   ))}
               </nav>
@@ -251,6 +269,9 @@ export default function Layout() {
                   >
                     {item.icon}
                     {item.label}
+                    {isLocked(item.to) ? (
+                      <FiLock size={13} className="ml-auto opacity-70" aria-label="Locked" />
+                    ) : null}
                   </NavLink>
                 ))}
               </nav>
@@ -270,13 +291,13 @@ export default function Layout() {
 
       {/* Main */}
       <div className="flex flex-1 flex-col min-w-0 bg-[radial-gradient(98.95%_98.95%_at_50%_1.05%,_#EEEAFF_0%,_#FFFFFF_36.12%)]">
-        {/* Remove SubscriptionOutlet Used Outlet */}
+        {/* Locks pages the partner's plan doesn't include */}
           <motion.main
           className="flex-1 scroll-container overflow-y-auto pb-25 md:pb-0"
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <Outlet />
+          <SubscriptionOutlet />
         </motion.main>
         
 
