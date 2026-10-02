@@ -177,6 +177,10 @@ export async function fetchPartnerSubscription(apiBase, user) {
       end_date: data?.end_date,
       next_billing_date: data?.next_billing_date,
       status: data?.status,
+      plan_id: data?.plan_id,
+      plan_type: data?.plan_type,
+      features: Array.isArray(data?.features) ? data.features : [],
+      all_features: Boolean(data?.all_features),
       raw: data,
     };
   } catch {
