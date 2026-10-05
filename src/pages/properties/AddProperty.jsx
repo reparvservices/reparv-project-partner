@@ -9,6 +9,7 @@ import PropertyClassification from "../../components/properties/addProperty/Prop
 import BasicInfoForm from "../../components/properties/addProperty/BasicInfoForm";
 import LocationForm from "../../components/properties/addProperty/LocationForm";
 import MediaGallery from "../../components/properties/addProperty/MediaGallery";
+import VideoLinksForm, { youtubeRegex, instagramReelRegex } from "../../components/properties/addProperty/VideoLinksForm";
 import ListingQualitySidebar from "../../components/properties/addProperty/ListingQualitySidebar";
 
 const nameRegex  = /^[A-Za-z\s]+$/;
@@ -20,6 +21,7 @@ const EMPTY_FORM = {
   totalSalesPrice: "", totalOfferPrice: "", address: "", state: "", city: "",
   pincode: "", latitude: "", longitude: "", locationLabel: "",
   projectBy: "", contact: "", email: "",
+  videoLink: "", instagramReelLink: "",
 };
 
 const EMPTY_IMAGES = {
@@ -43,7 +45,7 @@ export default function AddProperty() {
   const [states, setStates]           = useState([]);
   const [cities, setCities]           = useState([]);
   const [canPublish, setCanPublish]   = useState(false);
-  const [errors, setErrors]           = useState({ propertyName: "", projectBy: "", contact: "", email: "" });
+  const [errors, setErrors]           = useState({ propertyName: "", projectBy: "", contact: "", email: "", videoLink: "", instagramReelLink: "" });
 
   const handleChange = (field, value) => {
     if (field === "state") { setForm((p) => ({ ...p, state: value, city: "" })); setCities([]); }
@@ -56,6 +58,8 @@ export default function AddProperty() {
     if (name === "projectBy"    && value && !nameRegex.test(value))  e = "Letters only";
     if (name === "contact"      && value && !phoneRegex.test(value)) e = "Enter valid 10-digit number";
     if (name === "email"        && value && !emailRegex.test(value)) e = "Enter valid email";
+    if (name === "videoLink"    && value && !youtubeRegex.test(value)) e = "Enter a valid YouTube video link";
+    if (name === "instagramReelLink" && value && !instagramReelRegex.test(value)) e = "Enter a valid Instagram reel link";
     setErrors((p) => ({ ...p, [name]: e }));
   };
 
@@ -116,7 +120,7 @@ export default function AddProperty() {
         return;
       }
 
-      const payload = { ...form };
+      const payload = { ...form, videoLink: form.videoLink.trim(), instagramReelLink: form.instagramReelLink.trim() };
       for (const field of Object.keys(EMPTY_IMAGES)) {
         if (imageFiles[field]?.length > 0) {
           const urls = [];
@@ -162,6 +166,7 @@ export default function AddProperty() {
             <BasicInfoForm form={form} errors={errors} propertyTab={propertyTab} onChange={handleChange} onValidate={validateField} />
             <LocationForm form={form} errors={errors} states={states} cities={cities} onChange={handleChange} onValidate={validateField} />
             <MediaGallery imageFiles={imageFiles} onAdd={handleAddImages} onRemove={handleRemoveImage} />
+            <VideoLinksForm form={form} errors={errors} onChange={handleChange} onValidate={validateField} />
 
             <div className="hidden sm:flex items-center justify-between gap-3 pt-2">
               <button type="button" onClick={() => navigate("/app/properties")} className="h-10 px-5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">

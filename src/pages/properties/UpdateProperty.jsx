@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../store/auth";
 import { uploadToS3 } from "../../utils/s3";
@@ -8,6 +8,10 @@ import ListingQualitySidebar from "../../components/properties/addProperty/Listi
 import StepOne from "../../components/properties/addProperty/StepOne";
 import StepTwo from "../../components/properties/addProperty/StepTwo";
 import StepThree from "../../components/properties/addProperty/StepThree";
+import VideoLinksForm, { youtubeRegex, instagramReelRegex } from "../../components/properties/addProperty/VideoLinksForm";
+
+const VIDEO_LINK_FIELDS = { videoLink: youtubeRegex, instagramReelLink: instagramReelRegex };
+const VIDEO_LINK_ERRORS = { videoLink: "Enter a valid YouTube video link", instagramReelLink: "Enter a valid Instagram reel link" };
 
 const EMPTY_PROPERTY = {
   propertyid: "",
@@ -63,6 +67,8 @@ const EMPTY_PROPERTY = {
   qualityBenefit: [],
   capitalAppreciationBenefit: [],
   ecofriendlyBenefit: [],
+  videoLink: "",
+  instagramReelLink: "",
 };
 
 const EMPTY_IMAGES = {
@@ -128,6 +134,9 @@ export default function UpdateProperty() {
   const [cities, setCities] = useState([]);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
+  const [linkErrors, setLinkErrors] = useState({ videoLink: "", instagramReelLink: "" });
+  // Links as loaded — only send a link back if the partner changed it
+  const loadedLinks = useRef({ videoLink: "", instagramReelLink: "" });
 
   /* ── fetch existing property ── */
   useEffect(() => {
@@ -140,7 +149,11 @@ export default function UpdateProperty() {
         });
         if (!res.ok) throw new Error();
         const data = await res.json();
-        setForm((prev) => ({ ...prev, ...data }));
+        loadedLinks.current = {
+          videoLink: data.videoLink || "",
+          instagramReelLink: data.instagramReelLink || "",
+        };
+        setForm((prev) => ({ ...prev, ...data, ...loadedLinks.current }));
       } catch (e) {
         console.error(e);
         alert("Failed to load property.");
@@ -203,12 +216,29 @@ export default function UpdateProperty() {
     }
   }, [form, step]);
 
+  const handleLinkChange = (field, value) => setForm((p) => ({ ...p, [field]: value }));
+  const validateLink = (field, value) =>
+    setLinkErrors((p) => ({
+      ...p,
+      [field]: value && !VIDEO_LINK_FIELDS[field].test(value) ? VIDEO_LINK_ERRORS[field] : "",
+    }));
+
   /* ── submit ── */
   const handleSubmit = async (e) => {
     e?.preventDefault();
+    if (Object.values(linkErrors).some(Boolean)) {
+      setStep(3);
+      alert("Please fix the video links before saving.");
+      return;
+    }
     setLoading(true);
     try {
       const payload = { ...form };
+      for (const field of Object.keys(VIDEO_LINK_FIELDS)) {
+        const value = (form[field] || "").trim();
+        if (value === loadedLinks.current[field]) delete payload[field];
+        else payload[field] = value;
+      }
       for (const field of Object.keys(EMPTY_IMAGES)) {
         if (imageFiles[field]?.length > 0) {
           const urls = [];
@@ -233,12 +263,15 @@ export default function UpdateProperty() {
         alert((await res.json()).message || "Property already exists!");
         return;
       }
-      if (!res.ok) throw new Error(`Status: ${res.status}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || `Status: ${res.status}`);
+      }
       alert("Property updated successfully!");
       navigate("/app/properties");
     } catch (e) {
       console.error(e);
-      alert("Please check all fields and try again.");
+      alert(e.message?.startsWith("Status:") ? "Please check all fields and try again." : e.message);
     } finally {
       setLoading(false);
     }
@@ -361,6 +394,9 @@ export default function UpdateProperty() {
                   </div>
                 )}
               </div>
+            )}
+            {step === 3 && (
+              <VideoLinksForm form={form} errors={linkErrors} onChange={handleLinkChange} onValidate={validateLink} />
             )}
 
             {/* ── Desktop nav buttons ── */}
