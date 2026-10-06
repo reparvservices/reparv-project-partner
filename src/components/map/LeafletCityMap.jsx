@@ -1,5 +1,5 @@
 import React from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -7,6 +7,7 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import FormatPrice from "../FormatPrice";
+import SatelliteTileLayer, { SATELLITE_MAX_ZOOM } from "./SatelliteTileLayer";
 
 // Fix default marker issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -118,15 +119,11 @@ export default function LeafletCityMap({ properties, selectedCity }) {
       <MapContainer
         center={[21.1458, 79.0882]} // fallback center (Nagpur, India)
         zoom={5}
+        maxZoom={SATELLITE_MAX_ZOOM}
         style={{ height: "100%", width: "100%" }}
         attributionControl={false}
       >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          attribution='© OpenStreetMap contributors &copy; <a href="https://carto.com/">CARTO</a>'
-          subdomains={["a", "b", "c", "d"]}
-          maxZoom={20}
-        />
+        <SatelliteTileLayer />
 
         {/* Auto-fit map to markers */}
         <FitBounds properties={properties} />

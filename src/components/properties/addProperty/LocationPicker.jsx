@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  useMapEvents,
-  useMap,
-  LayersControl,
-} from "react-leaflet";
+import { MapContainer, Marker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useAuth } from "../../../store/auth";
+import SatelliteTileLayer, {
+  SATELLITE_MAX_ZOOM,
+} from "../../map/SatelliteTileLayer";
 
 /* ── Custom violet marker ─────────────────────────────────── */
 const markerIcon = new L.DivIcon({
@@ -154,30 +150,10 @@ export default function LocationPicker({
         <MapContainer
           center={coords || [20.5937, 78.9629]}
           zoom={coords ? 13 : 5}
+          maxZoom={SATELLITE_MAX_ZOOM}
           style={{ height: "100%", width: "100%" }}
         >
-          <LayersControl position="topright">
-            <LayersControl.BaseLayer checked name="Street Map">
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> contributors'
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                subdomains={["a", "b", "c", "d"]}
-              />
-            </LayersControl.BaseLayer>
-            <LayersControl.BaseLayer name="Satellite">
-              <TileLayer
-                attribution="Tiles &copy; Esri"
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              />
-            </LayersControl.BaseLayer>
-            <LayersControl.Overlay checked name="Labels">
-              <TileLayer
-                attribution='&copy; <a href="https://carto.com/">Carto</a>'
-                url="https://cartodb-basemaps-a.global.ssl.fastly.net/light_only_labels/{z}/{x}/{y}.png"
-                subdomains={["a", "b", "c", "d"]}
-              />
-            </LayersControl.Overlay>
-          </LayersControl>
+          <SatelliteTileLayer />
 
           <FlyToLocation coords={coords} />
 
