@@ -5,6 +5,10 @@ import { FaFire, FaEye, FaHeart, FaPhoneAlt, FaWhatsapp } from "react-icons/fa";
 import propertyPicture from "../../assets/propertyPicture.svg";
 import { getImageURI } from "../../utils/helper";
 import FormatPrice from "../FormatPrice";
+import {
+  prefetchPropertyPhoto,
+  sharePropertyOnWhatsApp,
+} from "../../utils/propertyShare";
 
 const GRADIENT = "linear-gradient(94.94deg, #5323DC -8.34%, #8E61FF 97.17%)";
 
@@ -166,6 +170,16 @@ export default function PropertyCard({ property: p, onAction, onCommissionClick 
 
         {/* Top-right buttons */}
         <div className="absolute top-3 right-3 flex gap-2">
+          <button
+            onClick={() => sharePropertyOnWhatsApp(p)}
+            onMouseEnter={() => prefetchPropertyPhoto(p)}
+            onFocus={() => prefetchPropertyPhoto(p)}
+            title="Share on WhatsApp"
+            aria-label="Share on WhatsApp"
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-[#25D366] text-white hover:bg-[#1ebe5b] transition-colors"
+          >
+            <FaWhatsapp size={17} />
+          </button>
           <button
             onClick={() => p.seoSlug && window.open("https://www.reparv.in/property-info/" + p.seoSlug, "_blank")}
             className="w-9 h-9 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
