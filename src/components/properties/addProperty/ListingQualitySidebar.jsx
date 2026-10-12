@@ -18,7 +18,7 @@ const ALL_CHECKS = [
 export default function ListingQualitySidebar({ form = {}, imageFiles = {} }) {
   // Derive done state from real form values
   const checks = {
-    basic:     !!form.propertyName && !!form.carpetArea,
+    basic:     !!form.propertyName && !!(form.carpetArea || form.plotArea || form.landArea),
     location:  !!form.state && !!form.city && !!form.address,
     price:     !!form.totalSalesPrice && !!form.totalOfferPrice,
     floor:     (imageFiles.frontView?.length || 0) >= 1,

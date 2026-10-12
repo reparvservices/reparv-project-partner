@@ -6,6 +6,13 @@ import { uploadToS3 } from "../../utils/s3";
 import Loader from "../../components/Loader";
 import AddPropertyHeader from "../../components/properties/addProperty/AddPropertyHeader";
 import PropertyClassification from "../../components/properties/addProperty/PropertyClassification";
+import {
+  propertyTabFor,
+  areaModeFor,
+  areaColumnsFor,
+  basicDetailFieldsFor,
+  BASIC_DETAIL_KEYS,
+} from "../../utils/propertyListing";
 import BasicInfoForm from "../../components/properties/addProperty/BasicInfoForm";
 import LocationForm from "../../components/properties/addProperty/LocationForm";
 import MediaGallery from "../../components/properties/addProperty/MediaGallery";
@@ -17,7 +24,10 @@ const phoneRegex = /^[6-9]\d{9}$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const EMPTY_FORM = {
-  propertyCategory: "", propertyName: "", builtUpArea: "", carpetArea: "",
+  listingType: "Sell", propertyKind: "Residential", propertyCategory: "", propertyName: "", builtUpArea: "", carpetArea: "",
+  plotArea: "", landArea: "", landUnit: "Acre",
+  furnishing: "", floorNo: "", totalFloors: "", propertyFacing: "", parkingAvailability: "",
+  powerBackup: "", waterSupply: "", ownershipType: "",
   totalSalesPrice: "", totalOfferPrice: "", address: "", state: "", city: "",
   pincode: "", latitude: "", longitude: "", locationLabel: "",
   projectBy: "", contact: "", email: "",
@@ -32,15 +42,19 @@ const EMPTY_IMAGES = {
 
 const REQUIRED = [
   "propertyCategory", "propertyName", "address", "state", "city",
-  "carpetArea", "totalSalesPrice", "totalOfferPrice",
+  "totalSalesPrice", "totalOfferPrice",
 ];
+
+// Required area field for each area mode (built / plot / land)
+const AREA_REQUIRED = { built: "carpetArea", plot: "plotArea", land: "landArea" };
 
 export default function AddProperty() {
   const navigate = useNavigate();
   const { URI, setLoading, refreshSubscription } = useAuth();
 
-  const [propertyTab, setPropertyTab] = useState("new");
+  const [condition, setCondition]     = useState("new");
   const [form, setForm]               = useState(EMPTY_FORM);
+  const propertyTab = propertyTabFor({ listingType: form.listingType, condition });
   const [imageFiles, setImageFiles]   = useState(EMPTY_IMAGES);
   const [states, setStates]           = useState([]);
   const [cities, setCities]           = useState([]);
@@ -64,7 +78,8 @@ export default function AddProperty() {
   };
 
   useEffect(() => {
-    const ok = REQUIRED.every((f) => { const v = form[f]; return v && v.toString().trim() !== ""; })
+    const required = [...REQUIRED, AREA_REQUIRED[areaModeFor(form)]];
+    const ok = required.every((f) => { const v = form[f]; return v && v.toString().trim() !== ""; })
       && !Object.values(errors).some(Boolean);
     setCanPublish(ok);
   }, [form, errors]);
@@ -120,7 +135,16 @@ export default function AddProperty() {
         return;
       }
 
-      const payload = { ...form, videoLink: form.videoLink.trim(), instagramReelLink: form.instagramReelLink.trim() };
+      const payload = {
+        ...form,
+        ...areaColumnsFor(areaModeFor(form), form),
+        videoLink: form.videoLink.trim(),
+        instagramReelLink: form.instagramReelLink.trim(),
+      };
+      // Only send the basic-info fields shown for this property type
+      const shown = new Set(basicDetailFieldsFor(form).map((f) => f.key));
+      BASIC_DETAIL_KEYS.forEach((k) => { if (!shown.has(k)) delete payload[k]; });
+      delete payload.plotArea; delete payload.landArea; delete payload.landUnit;
       for (const field of Object.keys(EMPTY_IMAGES)) {
         if (imageFiles[field]?.length > 0) {
           const urls = [];
@@ -138,7 +162,7 @@ export default function AddProperty() {
       if (res.status === 409) { alert(data.message || "Property already exists!"); return; }
       if (!res.ok) throw new Error(data.message || `Could not publish (status ${res.status})`);
       alert("Property added successfully!");
-      setForm(EMPTY_FORM); setImageFiles(EMPTY_IMAGES);
+      setForm(EMPTY_FORM); setCondition("new"); setImageFiles(EMPTY_IMAGES);
       navigate("/app/properties");
     } catch (e) { console.error(e); alert(e.message || "Please check all fields and try again."); }
     finally { setLoading(false); }
@@ -158,12 +182,16 @@ export default function AddProperty() {
         <form onSubmit={handleSubmit} id="add-property-form">
           <section className="space-y-5">
             <PropertyClassification
-              propertyTab={propertyTab}
+              listingType={form.listingType}
+              condition={condition}
+              propertyKind={form.propertyKind}
               propertyCategory={form.propertyCategory}
-              onTabChange={(tab) => { setPropertyTab(tab); handleChange("propertyCategory", ""); }}
-              onCategoryChange={(val) => handleChange("propertyCategory", val)}
+              onChange={({ listingType, condition: nextCondition, propertyKind, propertyCategory }) => {
+                setCondition(nextCondition);
+                setForm((p) => ({ ...p, listingType, propertyKind, propertyCategory }));
+              }}
             />
-            <BasicInfoForm form={form} errors={errors} propertyTab={propertyTab} onChange={handleChange} onValidate={validateField} />
+            <BasicInfoForm form={form} errors={errors} propertyTab={propertyTab} listingType={form.listingType} onChange={handleChange} onValidate={validateField} />
             <LocationForm form={form} errors={errors} states={states} cities={cities} onChange={handleChange} onValidate={validateField} />
             <MediaGallery imageFiles={imageFiles} onAdd={handleAddImages} onRemove={handleRemoveImage} />
             <VideoLinksForm form={form} errors={errors} onChange={handleChange} onValidate={validateField} />

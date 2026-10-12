@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import PropertyTypeMultiSelect from "./PropertyTypeMultiSelect";
 import {
+  areaModeFor,
+  parseLandArea,
+  LAND_UNITS,
+} from "../../../utils/propertyListing";
+import {
   SectionHeader,
   FieldLabel,
   FieldInput,
@@ -167,7 +172,11 @@ const RENTAL_ALL = [
 
 export default function StepTwo({ newProperty, setPropertyData }) {
   const isRental = RENTAL_ALL.includes(newProperty?.propertyCategory);
-  const isPlot = PLOT_CATS.includes(newProperty?.propertyCategory);
+  // Area inputs follow the property type: built / plot / agriculture land
+  const areaMode = areaModeFor(newProperty);
+  const isPlot =
+    PLOT_CATS.includes(newProperty?.propertyCategory) || areaMode !== "built";
+  const land = parseLandArea(newProperty.builtUpArea);
   const showFlats = [
     "NewFlat",
     "RentalFlat",
@@ -244,34 +253,98 @@ export default function StepTwo({ newProperty, setPropertyData }) {
           </div>
         )}
 
-        <Grid2>
+        {areaMode === "built" && (
+          <Grid2>
+            <div>
+              <FieldLabel active={!!newProperty.builtUpArea} required>
+                Built-Up Area
+              </FieldLabel>
+              <FieldInput
+                icon="ft²"
+                type="number"
+                placeholder="sq. ft."
+                value={newProperty.builtUpArea}
+                onChange={(e) => set("builtUpArea", e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <FieldLabel active={!!newProperty.carpetArea} required>
+                Carpet Area
+              </FieldLabel>
+              <FieldInput
+                icon="ft²"
+                type="number"
+                placeholder="sq. ft."
+                value={newProperty.carpetArea}
+                onChange={(e) => set("carpetArea", e.target.value)}
+                required
+              />
+            </div>
+          </Grid2>
+        )}
+
+        {/* Plot: one area, stored in both columns */}
+        {areaMode === "plot" && (
           <div>
-            <FieldLabel active={!!newProperty.builtUpArea} required>
-              Built-Up Area
+            <FieldLabel active={!!(newProperty.carpetArea || newProperty.builtUpArea)} required>
+              Plot Area
             </FieldLabel>
             <FieldInput
               icon="ft²"
               type="number"
               placeholder="sq. ft."
-              value={newProperty.builtUpArea}
-              onChange={(e) => set("builtUpArea", e.target.value)}
+              value={newProperty.carpetArea || newProperty.builtUpArea || ""}
+              onChange={(e) =>
+                setPropertyData({
+                  ...newProperty,
+                  builtUpArea: e.target.value,
+                  carpetArea: e.target.value,
+                })
+              }
               required
             />
           </div>
-          <div>
-            <FieldLabel active={!!newProperty.carpetArea} required>
-              Carpet Area
-            </FieldLabel>
-            <FieldInput
-              icon="ft²"
-              type="number"
-              placeholder="sq. ft."
-              value={newProperty.carpetArea}
-              onChange={(e) => set("carpetArea", e.target.value)}
-              required
-            />
-          </div>
-        </Grid2>
+        )}
+
+        {/* Agriculture / land: "2.5 Acre" stored in builtUpArea */}
+        {areaMode === "land" && (
+          <Grid2>
+            <div>
+              <FieldLabel active={!!land.value} required>
+                Land Area
+              </FieldLabel>
+              <FieldInput
+                type="number"
+                step="any"
+                placeholder="e.g. 2.5"
+                value={land.value}
+                onChange={(e) =>
+                  setPropertyData({
+                    ...newProperty,
+                    builtUpArea: e.target.value ? `${e.target.value} ${land.unit}` : "",
+                    carpetArea: "",
+                  })
+                }
+                required
+              />
+            </div>
+            <div>
+              <FieldLabel active>Unit</FieldLabel>
+              <PillSelect
+                options={LAND_UNITS}
+                value={land.unit}
+                onChange={(unit) =>
+                  setPropertyData({
+                    ...newProperty,
+                    builtUpArea: land.value ? `${land.value} ${unit}` : "",
+                    carpetArea: "",
+                  })
+                }
+              />
+            </div>
+          </Grid2>
+        )}
 
         {!isPlot && (
           <Grid2>

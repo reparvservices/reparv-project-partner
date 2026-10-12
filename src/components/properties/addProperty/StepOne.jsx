@@ -14,53 +14,8 @@ import {
   Grid3,
 } from "./FormUI";
 
-import {
-  FaHome,
-  FaBuilding,
-  FaStore,
-  FaIndustry,
-  FaTree,
-  FaCity,
-} from "react-icons/fa";
-import { MdApartment } from "react-icons/md";
-import { GiFarmTractor } from "react-icons/gi";
-
-/* ── Property type tabs & options ── */
-const NEW_TYPES = [
-  { label: "New Flat", value: "NewFlat", icon: MdApartment },
-  { label: "New Plot", value: "NewPlot", icon: FaTree },
-  { label: "New Shop", value: "NewShop", icon: FaStore },
-  { label: "Row House", value: "RowHouse", icon: FaHome },
-  { label: "Lease", value: "Lease", icon: FaBuilding },
-  { label: "Farm House", value: "FarmHouse", icon: GiFarmTractor },
-  { label: "Farm Land", value: "FarmLand", icon: FaTree },
-  { label: "Commercial Flat", value: "CommercialFlat", icon: MdApartment },
-  { label: "Commercial Plot", value: "CommercialPlot", icon: FaCity },
-  { label: "Industrial Space", value: "IndustrialSpace", icon: FaIndustry },
-];
-const RENTAL_TYPES = [
-  { label: "Rental Flat", value: "RentalFlat", icon: MdApartment },
-  { label: "Rental Plot", value: "RentalPlot", icon: FaCity },
-  { label: "Rental Villa", value: "RentalVilla", icon: FaTree },
-  { label: "Rental Shop", value: "RentalShop", icon: FaStore },
-  { label: "Rental Office", value: "RentalOffice", icon: FaBuilding },
-  { label: "Rental House", value: "RentalHouse", icon: FaHome },
-  { label: "Rental Godown", value: "RentalGodown", icon: FaCity },
-  { label: "Rental Land", value: "RentalOpenLand", icon: FaTree },
-  { label: "Rental ShowRoom", value: "RentalShowroom", icon: FaIndustry },
-];
-const RESALE_TYPES = [
-  { label: "Resale Flat", value: "ResaleFlat", icon: MdApartment },
-  { label: "Resale Plot", value: "ResalePlot", icon: FaCity },
-  { label: "Resale House", value: "ResaleHouse", icon: FaHome },
-  { label: "Resale Villa", value: "ResalelVilla", icon: FaTree },
-  { label: "Resale Shop", value: "ResaleShop", icon: FaStore },
-  { label: "Resale Office", value: "ResaleOffice", icon: FaBuilding },
-  { label: "Resale Farm House", value: "ResaleFarmHouse", icon: GiFarmTractor },
-  { label: "Resale Godown", value: "ResaleGodown", icon: FaCity },
-  { label: "Resale Bunglow", value: "ResaleBunglow", icon: FaBuilding },
-  { label: "Resale ShowRoom", value: "ResaleShowroom", icon: FaIndustry },
-];
+import PropertyClassification from "./PropertyClassification";
+import { classificationFromProperty } from "../../../utils/propertyListing";
 
 const RENTAL_CATS = [
   "RentalFlat",
@@ -83,20 +38,12 @@ export default function StepOne({
   cities,
 }) {
   const { URI } = useAuth();
-  const [propertyTab, setPropertyTab] = useState("new");
+  // New Launch / Resale: follows the loaded category until the user picks one
+  const [conditionChoice, setCondition] = useState(null);
   const [isSame, setIsSame] = useState(true);
   const [message, setMessage] = useState("");
 
   const isRental = RENTAL_CATS.includes(newProperty?.propertyCategory);
-
-  /* Sync tab to loaded category (edit mode) */
-  useEffect(() => {
-    if (!newProperty?.propertyCategory) return;
-    const c = newProperty.propertyCategory;
-    if (c.startsWith("New")) setPropertyTab("new");
-    else if (c.startsWith("Rental")) setPropertyTab("rental");
-    else if (c.startsWith("Resale")) setPropertyTab("resale");
-  }, [newProperty?.propertyCategory]);
 
   /* Property name uniqueness check */
   const checkPropertyName = async () => {
@@ -122,12 +69,13 @@ export default function StepOne({
 
   const set = (key, val) => setPropertyData({ ...newProperty, [key]: val });
 
-  const activeTypes =
-    propertyTab === "new"
-      ? NEW_TYPES
-      : propertyTab === "rental"
-        ? RENTAL_TYPES
-        : RESALE_TYPES;
+  const classification = {
+    ...classificationFromProperty(newProperty),
+    ...(newProperty.listingType ? { listingType: newProperty.listingType } : {}),
+    ...(newProperty.propertyKind ? { propertyKind: newProperty.propertyKind } : {}),
+    condition:
+      conditionChoice ?? classificationFromProperty(newProperty).condition,
+  };
 
   return (
     <div className="space-y-0">
@@ -137,47 +85,18 @@ export default function StepOne({
         subtitle="What type of property are you listing?"
       />
 
-      {/* Main tabs */}
-      <div className="flex gap-2 pb-4">
-        {["new", "rental", "resale"].map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => {
-              setPropertyTab(tab);
-              set("propertyCategory", "");
-            }}
-            className={`px-5 py-2 rounded-full text-sm font-semibold border transition-all capitalize ${
-              propertyTab === tab
-                ? "bg-violet-700 text-white border-violet-600"
-                : "bg-white text-gray-600 border-gray-200 hover:border-violet-500"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Category pills with icon */}
-      <div className="flex flex-wrap gap-2 pb-2">
-        {activeTypes.map(({ label, value, icon: Icon }) => {
-          const active = newProperty.propertyCategory === value;
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => set("propertyCategory", value)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                active
-                  ? "bg-violet-700 text-white border-violet-600 shadow-sm"
-                  : "bg-white text-gray-600 border-gray-200 hover:border-violet-500 hover:text-violet-500"
-              }`}
-            >
-              <Icon size={13} />
-              {label}
-            </button>
-          );
-        })}
+      <div className="pb-4">
+        <PropertyClassification
+          bare
+          listingType={classification.listingType}
+          condition={classification.condition}
+          propertyKind={classification.propertyKind}
+          propertyCategory={newProperty.propertyCategory}
+          onChange={({ listingType, condition: nextCondition, propertyKind, propertyCategory }) => {
+            setCondition(nextCondition);
+            setPropertyData({ ...newProperty, listingType, propertyKind, propertyCategory });
+          }}
+        />
       </div>
 
       <Divider />

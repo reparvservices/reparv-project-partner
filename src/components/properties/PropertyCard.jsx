@@ -5,6 +5,7 @@ import { FaFire, FaEye, FaHeart, FaPhoneAlt, FaWhatsapp } from "react-icons/fa";
 import propertyPicture from "../../assets/propertyPicture.svg";
 import { getImageURI } from "../../utils/helper";
 import FormatPrice from "../FormatPrice";
+import { classificationFromProperty, categoryLabel } from "../../utils/propertyListing";
 import {
   prefetchPropertyPhoto,
   sharePropertyOnWhatsApp,
@@ -216,8 +217,26 @@ export default function PropertyCard({ property: p, onAction, onCommissionClick 
             <p className="flex items-center gap-1.5 text-slate-400 text-sm">
               <FiMapPin size={13} />
               {[p.location, p.city, p.state].filter(Boolean).join(", ")}
-              {p.propertyCategory && <><span className="mx-1 text-slate-300">•</span>{p.propertyCategory}</>}
+              {p.propertyCategory && <><span className="mx-1 text-slate-300">•</span>{categoryLabel(p.propertyCategory)}</>}
             </p>
+            {p.propertyCategory && (() => {
+              const { listingType, propertyKind } = classificationFromProperty(p);
+              const tone = listingType === "Buy"
+                ? "bg-amber-50 text-amber-700 border-amber-200"
+                : listingType === "Rent"
+                  ? "bg-sky-50 text-sky-700 border-sky-200"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200";
+              return (
+                <div className="flex flex-wrap gap-1.5">
+                  <span className={`px-2 py-0.5 rounded-full border text-[11px] font-semibold ${tone}`}>
+                    {listingType === "Buy" ? "Buy Requirement" : `For ${listingType === "Rent" ? "Rent" : "Sale"}`}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 text-[11px] font-semibold">
+                    {propertyKind === "Agriculture" ? "Agriculture / Land" : propertyKind}
+                  </span>
+                </div>
+              );
+            })()}
             {p.fullname && (
               <p className="text-xs text-slate-400">
                 Listed by <span className="font-semibold text-slate-600">{p.fullname}</span>

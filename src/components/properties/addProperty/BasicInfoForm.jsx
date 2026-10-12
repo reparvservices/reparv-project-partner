@@ -1,5 +1,14 @@
+import {
+  areaModeFor,
+  basicDetailFieldsFor,
+  LAND_UNITS,
+} from "../../../utils/propertyListing";
 
-export default function BasicInfoForm({ form, errors, propertyTab, onChange, onValidate }) {
+export default function BasicInfoForm({ form, errors, propertyTab, listingType, onChange, onValidate }) {
+  const isBuy = listingType === "Buy";
+  // Fields follow the property type: Residential / Commercial / Agriculture-Land
+  const areaMode = areaModeFor(form);
+  const detailFields = basicDetailFieldsFor(form);
 
   const inputCls = (err) =>
     `mt-1 w-full h-10 rounded-xl border px-3 text-sm text-gray-800 outline-none transition-all placeholder:text-gray-400
@@ -8,14 +17,35 @@ export default function BasicInfoForm({ form, errors, propertyTab, onChange, onV
        : "border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
      }`;
 
+  const numberInput = (field, label, placeholder, required = false) => (
+    <div>
+      <label className="text-xs text-gray-500 font-medium">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <input
+        type="number"
+        min="0"
+        value={form[field] || ""}
+        onChange={e => onChange(field, e.target.value)}
+        placeholder={placeholder}
+        className={inputCls(false)}
+      />
+    </div>
+  );
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 space-y-4">
-      <h3 className="font-semibold text-gray-900">Basic Information</h3>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="font-semibold text-gray-900">Basic Information</h3>
+        <span className="text-[11px] font-medium text-violet-700 bg-violet-50 border border-violet-100 rounded-full px-2 py-0.5">
+          {areaMode === "land" ? "Agriculture / Land" : form.propertyKind || "Residential"}
+        </span>
+      </div>
 
       {/* Property Name */}
       <div>
         <label className="text-xs text-gray-500 font-medium">
-          Property Name / Project <span className="text-red-500">*</span>
+          {areaMode === "land" ? "Land / Farm Name" : "Property Name / Project"} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -25,7 +55,7 @@ export default function BasicInfoForm({ form, errors, propertyTab, onChange, onV
             onChange("propertyName", v);
             onValidate("propertyName", v);
           }}
-          placeholder="e.g. Green Valley Heights"
+          placeholder={areaMode === "land" ? "e.g. Green Acres Farm" : "e.g. Green Valley Heights"}
           className={inputCls(errors.propertyName)}
         />
         {errors.propertyName
@@ -34,36 +64,74 @@ export default function BasicInfoForm({ form, errors, propertyTab, onChange, onV
         }
       </div>
 
-      {/* Built Up Area */}
-      <div>
-        <label className="text-xs text-gray-500 font-medium">Built Up Area (sq ft)</label>
-        <input
-          type="number"
-          value={form.builtUpArea || ""}
-          onChange={e => onChange("builtUpArea", e.target.value)}
-          placeholder="e.g. 1,450"
-          className={inputCls(false)}
-        />
-      </div>
+      {/* Area — depends on the property type */}
+      {areaMode === "built" && (
+        <>
+          {numberInput("builtUpArea", "Built Up Area (sq ft)", "e.g. 1,450")}
+          {numberInput("carpetArea", "Carpet Area (sq ft)", "e.g. 1,100", true)}
+        </>
+      )}
+      {areaMode === "plot" && numberInput("plotArea", "Plot Area (sq ft)", "e.g. 1,200", true)}
+      {areaMode === "land" && (
+        <div>
+          <label className="text-xs text-gray-500 font-medium">
+            Land Area <span className="text-red-500">*</span>
+          </label>
+          <div className="mt-1 flex gap-2">
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={form.landArea || ""}
+              onChange={e => onChange("landArea", e.target.value)}
+              placeholder="e.g. 2.5"
+              className={`${inputCls(false)} mt-0 flex-1`}
+            />
+            <select
+              value={form.landUnit || "Acre"}
+              onChange={e => onChange("landUnit", e.target.value)}
+              className="h-10 rounded-xl border border-gray-200 px-3 text-sm text-gray-800 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            >
+              {LAND_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
 
-      {/* Carpet Area */}
-      <div>
-        <label className="text-xs text-gray-500 font-medium">
-          Carpet Area (sq ft) <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="number"
-          value={form.carpetArea}
-          onChange={e => onChange("carpetArea", e.target.value)}
-          placeholder="e.g. 1,100"
-          className={inputCls(false)}
-        />
-      </div>
+      {/* Type-specific details */}
+      {detailFields.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {detailFields.map(f => (
+            <div key={f.key}>
+              <label className="text-xs text-gray-500 font-medium">{f.label}</label>
+              {f.type === "select" ? (
+                <select
+                  value={form[f.key] || ""}
+                  onChange={e => onChange(f.key, e.target.value)}
+                  className={inputCls(false)}
+                >
+                  <option value="">Select</option>
+                  {f.options.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              ) : (
+                <input
+                  type="number"
+                  min="0"
+                  value={form[f.key] || ""}
+                  onChange={e => onChange(f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                  className={inputCls(false)}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Total Sales Price */}
       <div>
         <label className="text-xs text-gray-500 font-medium">
-          {propertyTab === "rent" ? "Monthly Rent (₹)" : "Total Sales Price (₹)"}
+          {isBuy ? "Maximum Budget (₹)" : propertyTab === "rent" ? "Monthly Rent (₹)" : "Total Sales Price (₹)"}
           <span className="text-red-500 ml-1">*</span>
         </label>
         <div className="relative">
@@ -81,7 +149,7 @@ export default function BasicInfoForm({ form, errors, propertyTab, onChange, onV
       {/* Offer Price */}
       <div>
         <label className="text-xs text-gray-500 font-medium">
-          Offer Price (₹) <span className="text-red-500">*</span>
+          {isBuy ? "Preferred Budget (₹)" : "Offer Price (₹)"} <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium mt-0.5">₹</span>
@@ -93,7 +161,9 @@ export default function BasicInfoForm({ form, errors, propertyTab, onChange, onV
             className={`mt-1 w-full h-10 rounded-xl border border-gray-200 pl-7 pr-3 text-sm text-gray-800 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100 transition-all placeholder:text-gray-400`}
           />
         </div>
-        <p className="text-xs text-gray-400 mt-1">Price you're willing to negotiate</p>
+        <p className="text-xs text-gray-400 mt-1">
+          {isBuy ? "Budget you'd ideally like to pay" : "Price you're willing to negotiate"}
+        </p>
       </div>
     </div>
   );
