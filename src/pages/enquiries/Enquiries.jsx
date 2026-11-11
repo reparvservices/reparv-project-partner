@@ -263,7 +263,7 @@ export default function Enquiries() {
 
   const editEnquiry = async (id) => {
     try {
-      const res = await fetch(`${URI}/sales/enquirers/${id}`, {
+      const res = await fetch(`${URI}/project-partner/enquirers/${id}`, {
         method: "GET",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
