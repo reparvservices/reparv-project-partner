@@ -151,26 +151,6 @@ export default function PartnerPaymentStep3({
         },
       );
 
-      // #region agent log
-      fetch("http://127.0.0.1:7873/ingest/e030798b-abf2-42c8-b0a1-b6795e79c4b6", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ab9682" },
-        body: JSON.stringify({
-          sessionId: "ab9682",
-          runId: "post-fix",
-          hypothesisId: "F",
-          location: "Step3.jsx:startTrial:response",
-          message: "startTrial response",
-          data: {
-            success: !!res.data?.success,
-            status: res.status,
-            planId: selectedPlan?.id,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
-
       if (res.data.success) {
         alert(
           "🎉 Success! Your free trial has started. Login details sent to your email.",
@@ -179,21 +159,6 @@ export default function PartnerPaymentStep3({
         alert(res.data.message || "Unable to start trial");
       }
     } catch (err) {
-      // #region agent log
-      fetch("http://127.0.0.1:7873/ingest/e030798b-abf2-42c8-b0a1-b6795e79c4b6", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "ab9682" },
-        body: JSON.stringify({
-          sessionId: "ab9682",
-          runId: "post-fix",
-          hypothesisId: "F",
-          location: "Step3.jsx:startTrial:error",
-          message: "startTrial failed",
-          data: { errName: err?.name, errMsg: err?.message },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
       console.error(err);
       alert("Something went wrong while starting trial");
     }

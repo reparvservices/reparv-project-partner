@@ -165,7 +165,7 @@ export async function fetchPartnerSubscription(apiBase, user) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { active: false, raw: data };
+      return { active: false, raw: data, failed: true };
     }
     return {
       active: Boolean(data?.active),
@@ -184,7 +184,7 @@ export async function fetchPartnerSubscription(apiBase, user) {
       raw: data,
     };
   } catch {
-    return { active: false };
+    return { active: false, failed: true };
   }
 }
 

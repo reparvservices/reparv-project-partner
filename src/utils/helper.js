@@ -13,3 +13,22 @@ export const getImageURI = (path) => {
   // Ensure single slash between base and path
   return `${base}/${path.replace(/^\/+/, "")}`;
 };
+/** Photo list from a column value: array, JSON text, or double-encoded JSON. */
+export const parseImageList = (value) => {
+  let parsed = value;
+  for (let i = 0; i < 3 && typeof parsed === "string"; i++) {
+    const text = parsed.trim();
+    if (!text) return [];
+    if (!text.startsWith("[") && !text.startsWith('"')) {
+      return /^https?:\/\/|^\//.test(text) ? [text] : [];
+    }
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(parsed)
+    ? parsed.filter((v) => typeof v === "string" && v.trim())
+    : [];
+};

@@ -89,7 +89,7 @@ export default function LocationForm({
 
       {/* Pin Code — auto-filled from map reverse geocode */}
       <div>
-        <label className="text-xs text-gray-500 font-medium">Pin Code</label>
+        <label className="text-xs text-gray-500 font-medium">Pin Code <span className="text-red-500">*</span></label>
         <input
           type="text"
           maxLength={6}
@@ -105,7 +105,7 @@ export default function LocationForm({
       {/* ── Leaflet Map Picker ── */}
       <div>
         <label className="text-xs text-gray-500 font-medium block mb-1.5">
-          Pin on Map
+          Pin on Map <span className="text-red-500">*</span>
         </label>
         {/*
           LocationPicker props:
@@ -155,7 +155,7 @@ export default function LocationForm({
         <div>
           <label className="text-xs text-gray-500 font-medium">
             Phone <span className="text-red-500">*</span>
-          </label>
+           <span className="text-red-500">*</span></label>
           <div className="flex mt-1">
             <span className="h-10 px-3 flex items-center border border-r-0 border-gray-200 rounded-l-xl text-sm text-gray-500 bg-gray-50 font-medium">
               +91

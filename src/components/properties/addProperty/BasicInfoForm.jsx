@@ -2,6 +2,8 @@ import {
   areaModeFor,
   basicDetailFieldsFor,
   LAND_UNITS,
+  BHK_OPTIONS,
+  showBhkFor,
 } from "../../../utils/propertyListing";
 
 export default function BasicInfoForm({ form, errors, propertyTab, listingType, onChange, onValidate }) {
@@ -51,7 +53,7 @@ export default function BasicInfoForm({ form, errors, propertyTab, listingType, 
           type="text"
           value={form.propertyName}
           onChange={e => {
-            const v = e.target.value.replace(/[^A-Za-z\s]/g, "");
+            const v = e.target.value.replace(/[^A-Za-z0-9\s.,'&()-]/g, "");
             onChange("propertyName", v);
             onValidate("propertyName", v);
           }}
@@ -60,9 +62,25 @@ export default function BasicInfoForm({ form, errors, propertyTab, listingType, 
         />
         {errors.propertyName
           ? <p className="text-xs text-red-500 mt-1">{errors.propertyName}</p>
-          : <p className="text-xs text-gray-400 mt-1">Letters only — must be unique</p>
+          : <p className="text-xs text-gray-400 mt-1">Must be unique</p>
         }
       </div>
+
+      {showBhkFor(form.propertyCategory) && (
+        <div>
+          <label className="text-xs text-gray-500 font-medium">
+            BHK Configuration <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={form.propertyType}
+            onChange={e => onChange("propertyType", e.target.value)}
+            className={inputCls(false)}
+          >
+            <option value="">Select BHK</option>
+            {BHK_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
+      )}
 
       {/* Area — depends on the property type */}
       {areaMode === "built" && (

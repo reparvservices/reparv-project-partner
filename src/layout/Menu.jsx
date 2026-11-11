@@ -3,6 +3,7 @@ import { useAuth } from "../store/auth";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { getApiPrefixForRole } from "../lib/partnerAuth";
+import { getLockState } from "../lib/subscriptionLock";
 
 // ── Icons (inline SVG components to avoid extra deps) ──────────────────────
 const QRIcon = () => (
@@ -380,7 +381,7 @@ const LogOutIcon = () => (
 );
 
 // ── Menu Item Component ────────────────────────────────────────────────────
-function MenuItem({ icon, label, subtitle, onClick, danger = false }) {
+function MenuItem({ icon, label, subtitle, onClick, danger = false, locked = false }) {
   return (
     <button
       onClick={onClick}
@@ -394,6 +395,12 @@ function MenuItem({ icon, label, subtitle, onClick, danger = false }) {
           className={`block text-[15px] font-medium leading-tight ${danger ? "text-[#E74C3C]" : "text-[#1A1A2E]"}`}
         >
           {label}
+          {locked && (
+            <span className="ml-2 inline-flex items-center gap-1 align-middle text-[10px] font-semibold text-[#5E23DC] bg-[#F1EBFF] px-2 py-[2px] rounded-full">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+              Upgrade
+            </span>
+          )}
         </span>
         {subtitle && (
           <span className="block text-[12px] text-[#9898A6] mt-0.5">
@@ -422,7 +429,13 @@ function Section({ title, children }) {
 
 // ── Main Menu Page ─────────────────────────────────────────────────────────
 export default function Menu() {
-  const { URI, logout, user: authUser } = useAuth();
+  const { URI, logout, user: authUser, subscription, role } = useAuth();
+  // Locked items open the plans page instead of a page the plan doesn't include
+  const go = (path) => {
+    const locked = getLockState(subscription, path, role).locked;
+    navigate(locked ? "/app/subscription/compare-plans" : path);
+  };
+  const lockedFor = (path) => getLockState(subscription, path, role).locked;
   const navigate = useNavigate();
 
   const [user, setUser] = useState({
@@ -591,22 +604,26 @@ export default function Menu() {
             icon={<UsersIcon />}
             label="Customers"
             subtitle="Manage client database"
-            onClick={() => navigate("/app/customers")}
+            onClick={() => go("/app/customers")}
+            locked={lockedFor("/app/customers")}
           />
           <MenuItem
             icon={<BuildingIcon />}
             label="Builders"
-            onClick={() => navigate("/app/builders")}
+            onClick={() => go("/app/builders")}
+            locked={lockedFor("/app/builders")}
           />
           <MenuItem
             icon={<HandshakeIcon />}
             label="Sales Partners"
-            onClick={() => navigate("/app/sales-partners")}
+            onClick={() => go("/app/sales-partners")}
+            locked={lockedFor("/app/sales-partners")}
           />
           <MenuItem
             icon={<MapIcon />}
             label="Territory Partners"
-            onClick={() => navigate("/app/territory-partners")}
+            onClick={() => go("/app/territory-partners")}
+            locked={lockedFor("/app/territory-partners")}
           />
         </Section>
 
@@ -616,12 +633,14 @@ export default function Menu() {
             icon={<HomeIcon />}
             label="Properties"
             subtitle="Listings & Inventory"
-            onClick={() => navigate("/app/properties")}
+            onClick={() => go("/app/properties")}
+            locked={lockedFor("/app/properties")}
           />
           <MenuItem
             icon={<HelpCircleIcon />}
             label="Enquiries"
-            onClick={() => navigate("/app/enquiries")}
+            onClick={() => go("/app/enquiries")}
+            locked={lockedFor("/app/enquiries")}
           />
           <MenuItem
             icon={<TicketIcon />}
@@ -635,17 +654,20 @@ export default function Menu() {
           <MenuItem
             icon={<CalendarIcon />}
             label="Calendar"
-            onClick={() => navigate("/app/calendar")}
+            onClick={() => go("/app/calendar")}
+            locked={lockedFor("/app/calendar")}
           />
           <MenuItem
             icon={<StarIcon />}
             label="Add Event"
-            onClick={() => navigate("/app/calendar/event/add")}
+            onClick={() => go("/app/calendar/event/add")}
+            locked={lockedFor("/app/calendar/event/add")}
           />
           <MenuItem
             icon={<MessageIcon />}
             label="Community"
-            onClick={() => navigate("/app/community")}
+            onClick={() => go("/app/community")}
+            locked={lockedFor("/app/community")}
           />
         </Section>
 

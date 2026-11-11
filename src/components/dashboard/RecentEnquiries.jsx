@@ -121,7 +121,7 @@ export default function RecentEnquiries({ enquiries = [] }) {
           return (
             <div
               key={item.enquirersid || i}
-              onClick={() => navigate("/enquiries")}
+              onClick={() => navigate("/app/enquiries")}
               className="flex items-center gap-5 px-6 py-5 border-b border-slate-50 last:border-0 hover:bg-slate-50/60 transition-colors overflow-scroll scrollbar-hide"
             >
               {/* Avatar */}

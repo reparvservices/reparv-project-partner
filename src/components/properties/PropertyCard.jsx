@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FiEye, FiEdit, FiMapPin, FiCheckCircle, FiMoreVertical, FiX } from "react-icons/fi";
 import { FaFire, FaEye, FaHeart, FaPhoneAlt, FaWhatsapp } from "react-icons/fa";
 import propertyPicture from "../../assets/propertyPicture.svg";
-import { getImageURI } from "../../utils/helper";
+import { getImageURI, parseImageList } from "../../utils/helper";
 import FormatPrice from "../FormatPrice";
 import { classificationFromProperty, categoryLabel } from "../../utils/propertyListing";
 import {
@@ -139,10 +139,8 @@ export default function PropertyCard({ property: p, onAction, onCommissionClick 
   const goToUpdate   = (id) => navigate(`/app/property/update/${id}`);
 
   let imageSrc = propertyPicture;
-  try {
-    const parsed = JSON.parse(p.frontView);
-    if (Array.isArray(parsed) && parsed[0]) imageSrc = getImageURI(parsed[0]);
-  } catch (e) {}
+  const frontImages = parseImageList(p.frontView);
+  if (frontImages[0]) imageSrc = getImageURI(frontImages[0]);
 
   return (
     <div className="w-full bg-white rounded-lg border shadow-sm overflow-hidden hover:shadow-md transition-shadow">

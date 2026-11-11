@@ -1,6 +1,7 @@
-import { FiChevronRight } from "react-icons/fi";
+import { FiChevronRight, FiLock } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../store/auth";
+import { getLockState } from "../../lib/subscriptionLock";
 /**
  * BusinessOverview
  * Props:
@@ -12,8 +13,10 @@ import { useAuth } from "../../store/auth";
  */
 export default function BusinessOverview({ counts = {} }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, subscription, role } = useAuth();
   const isProjectPartner = user?.role === "Project Partner";
+  // Same rule as the page lock: plan must include the page's feature
+  const isLocked = (route) => getLockState(subscription, route, role).locked;
 
   const items = [
     {
@@ -204,34 +207,49 @@ export default function BusinessOverview({ counts = {} }) {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {items
           .filter((item) => !item.hide)
-          .map((item) => (
-            <div
-              key={item.label}
-              onClick={() => navigate(item.route)}
-              className="cursor-pointer bg-white rounded-3xl p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:border md:rounded-xl md:p-6 hover:border-violet-300 hover:shadow-sm transition-all"
-            >
-              {/* Mobile: icon row + value */}
-              <div className="flex items-center justify-between gap-3 md:hidden">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center">
-                  {item.icon}
+          .map((item) => {
+            const locked = isLocked(item.route);
+            const value = locked ? (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#5E23DC] bg-[#F1EBFF] px-2 py-1 rounded-full">
+                <FiLock size={11} /> Upgrade
+              </span>
+            ) : (
+              item.value ?? 0
+            );
+            return (
+              <div
+                key={item.label}
+                onClick={() =>
+                  navigate(locked ? "/app/subscription/compare-plans" : item.route)
+                }
+                title={locked ? `Upgrade your plan to unlock ${item.label}` : undefined}
+                className={`cursor-pointer bg-white rounded-3xl p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:border md:rounded-xl md:p-6 hover:border-violet-300 hover:shadow-sm transition-all ${
+                  locked ? "border-dashed md:border-dashed border border-violet-200" : ""
+                }`}
+              >
+                {/* Mobile: icon row + value */}
+                <div className="flex items-center justify-between gap-3 md:hidden">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${locked ? "opacity-60" : ""}`}>
+                    {item.icon}
+                  </div>
+                  <div className="text-xl font-semibold text-gray-900">{value}</div>
                 </div>
-                <p className="text-xl font-semibold text-gray-900">
-                  {item.value ?? 0}
-                </p>
-              </div>
 
-              {/* Label + desktop value */}
-              <div className="flex items-center justify-between w-full">
-                <div>
-                  <p className="text-sm text-gray-500">{item.label}</p>
-                  <p className="hidden md:block text-xl font-semibold text-gray-900 mt-0.5">
-                    {item.value ?? 0}
-                  </p>
+                {/* Label + desktop value */}
+                <div className="flex items-center justify-between w-full">
+                  <div>
+                    <p className={`text-sm ${locked ? "text-gray-400" : "text-gray-500"}`}>
+                      {item.label}
+                    </p>
+                    <div className="hidden md:block text-xl font-semibold text-gray-900 mt-0.5">
+                      {value}
+                    </div>
+                  </div>
+                  <FiChevronRight className="hidden md:block text-gray-400 text-lg" />
                 </div>
-                <FiChevronRight className="hidden md:block text-gray-400 text-lg" />
               </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
     </div>
   );

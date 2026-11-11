@@ -5,6 +5,11 @@ import Loader from "../Loader";
 import { getImageURI } from "../../utils/helper";
 import { useAuth } from "../../store/auth";
 import { uploadToS3 } from "../../utils/s3";
+import {
+  ALL_IMAGE_SECTIONS,
+  imageSectionsFor,
+  maxPhotosFor,
+} from "../../utils/propertyListing";
 
 const GRADIENT = "linear-gradient(94.94deg, #5323DC -8.34%, #8E61FF 97.17%)";
 const inputCls =
@@ -19,59 +24,10 @@ const btnDanger =
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
 
-const IMAGE_OPTIONS = [
-  { value: "frontView", label: "Front View", exclude: [] },
-  {
-    value: "sideView",
-    label: "Side View",
-    exclude: ["CommercialPlot", "NewPlot", "FarmLand"],
-  },
-  {
-    value: "hallView",
-    label: "Hall View",
-    exclude: ["CommercialPlot", "NewPlot", "FarmLand"],
-  },
-  {
-    value: "kitchenView",
-    label: "Kitchen View",
-    exclude: [
-      "CommercialPlot",
-      "NewPlot",
-      "FarmLand",
-      "IndustrialSpace",
-      "RentalShop",
-    ],
-  },
-  {
-    value: "bedroomView",
-    label: "Bedroom View",
-    exclude: [
-      "CommercialPlot",
-      "NewPlot",
-      "FarmLand",
-      "IndustrialSpace",
-      "RentalShop",
-    ],
-  },
-  {
-    value: "bathroomView",
-    label: "Bathroom View",
-    exclude: [
-      "CommercialPlot",
-      "NewPlot",
-      "FarmLand",
-      "IndustrialSpace",
-      "RentalShop",
-    ],
-  },
-  {
-    value: "balconyView",
-    label: "Balcony View",
-    exclude: ["CommercialPlot", "NewPlot", "FarmLand"],
-  },
-  { value: "nearestLandmark", label: "Nearest Landmark", exclude: [] },
-  { value: "developedAmenities", label: "Developed Amenities", exclude: [] },
-];
+const IMAGE_OPTIONS = ALL_IMAGE_SECTIONS.map(({ key, label }) => ({
+  value: key,
+  label,
+}));
 
 function parseImages(property, field) {
   try {
@@ -152,7 +108,7 @@ function FilePicker({ category, imageFiles, onAdd }) {
         <span className="px-4 py-2.5 text-sm text-slate-400">
           {imageFiles[category]?.length
             ? `${imageFiles[category].length} file(s) selected`
-            : "Upload images (max 3, 2MB each)"}
+            : `Upload images (max ${maxPhotosFor(category)}, 2MB each)`}
         </span>
         <span
           className="text-white px-4 py-2.5 text-sm font-medium shrink-0"
@@ -181,8 +137,8 @@ export default function UpdateImagesForm({
 
   const category = selectedType;
   const existingImages = category ? parseImages(newProperty, category) : [];
-  const filteredOptions = IMAGE_OPTIONS.filter(
-    (opt) => !opt.exclude.includes(newProperty?.propertyCategory),
+  const filteredOptions = imageSectionsFor(newProperty?.propertyCategory).map(
+    ({ key, label }) => ({ value: key, label }),
   );
 
   const handleAdd = (e, cat) => {
@@ -196,9 +152,10 @@ export default function UpdateImagesForm({
 
     setImageFiles((prev) => {
       const merged = [...(prev[cat] || []), ...valid];
-      if (merged.length > 3) {
-        alert("Max 3 images per category.");
-        return { ...prev, [cat]: merged.slice(0, 3) };
+      const max = maxPhotosFor(cat);
+      if (merged.length > max) {
+        alert(`Max ${max} images in this category.`);
+        return { ...prev, [cat]: merged.slice(0, max) };
       }
       return { ...prev, [cat]: merged };
     });
@@ -233,6 +190,7 @@ export default function UpdateImagesForm({
 
           for (const file of files) {
             const url = await uploadToS3(file);
+            if (!url) throw new Error(`Could not upload ${file.name}`);
             uploadedData[value].push(url);
           }
         }

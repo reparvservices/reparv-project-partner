@@ -11,20 +11,22 @@ import {
   areaModeFor,
   areaColumnsFor,
   basicDetailFieldsFor,
-  BASIC_DETAIL_KEYS,
-} from "../../utils/propertyListing";
+  BASIC_DETAIL_KEYS, showBhkFor, imageSectionsFor, maxPhotosFor, ALL_IMAGE_SECTIONS } from "../../utils/propertyListing";
 import BasicInfoForm from "../../components/properties/addProperty/BasicInfoForm";
 import LocationForm from "../../components/properties/addProperty/LocationForm";
 import MediaGallery from "../../components/properties/addProperty/MediaGallery";
 import VideoLinksForm, { youtubeRegex, instagramReelRegex } from "../../components/properties/addProperty/VideoLinksForm";
 import ListingQualitySidebar from "../../components/properties/addProperty/ListingQualitySidebar";
 
-const nameRegex  = /^[A-Za-z\s]+$/;
+const nameRegex  = /^[A-Za-z0-9\s.,'&()-]+$/;
+const lettersRegex = /^[A-Za-z\s]+$/;
+const pincodeRegex = /^\d{6}$/;
+const SHOWABLE_IMAGE = /^image\/(jpeg|png|webp|gif)$/;
 const phoneRegex = /^[6-9]\d{9}$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const EMPTY_FORM = {
-  listingType: "Sell", propertyKind: "Residential", propertyCategory: "", propertyName: "", builtUpArea: "", carpetArea: "",
+  listingType: "Sell", propertyKind: "Residential", propertyCategory: "", propertyType: "", propertyName: "", builtUpArea: "", carpetArea: "",
   plotArea: "", landArea: "", landUnit: "Acre",
   furnishing: "", floorNo: "", totalFloors: "", propertyFacing: "", parkingAvailability: "",
   powerBackup: "", waterSupply: "", ownershipType: "",
@@ -34,15 +36,11 @@ const EMPTY_FORM = {
   videoLink: "", instagramReelLink: "",
 };
 
-const EMPTY_IMAGES = {
-  frontView: [], sideView: [], kitchenView: [], hallView: [],
-  bedroomView: [], bathroomView: [], balconyView: [],
-  nearestLandmark: [], developedAmenities: [],
-};
+const EMPTY_IMAGES = Object.fromEntries(ALL_IMAGE_SECTIONS.map((s) => [s.key, []]));
 
 const REQUIRED = [
-  "propertyCategory", "propertyName", "address", "state", "city",
-  "totalSalesPrice", "totalOfferPrice",
+  "propertyCategory", "propertyName", "address", "state", "city", "pincode",
+  "latitude", "longitude", "contact", "totalSalesPrice", "totalOfferPrice",
 ];
 
 // Required area field for each area mode (built / plot / land)
@@ -68,8 +66,8 @@ export default function AddProperty() {
 
   const validateField = (name, value) => {
     let e = "";
-    if (name === "propertyName" && value && !nameRegex.test(value))  e = "Only letters allowed";
-    if (name === "projectBy"    && value && !nameRegex.test(value))  e = "Letters only";
+    if (name === "propertyName" && value && !nameRegex.test(value))  e = "Letters, numbers and . , ' & ( ) - only";
+    if (name === "projectBy"    && value && !lettersRegex.test(value))  e = "Letters only";
     if (name === "contact"      && value && !phoneRegex.test(value)) e = "Enter valid 10-digit number";
     if (name === "email"        && value && !emailRegex.test(value)) e = "Enter valid email";
     if (name === "videoLink"    && value && !youtubeRegex.test(value)) e = "Enter a valid YouTube video link";
@@ -80,14 +78,24 @@ export default function AddProperty() {
   useEffect(() => {
     const required = [...REQUIRED, AREA_REQUIRED[areaModeFor(form)]];
     const ok = required.every((f) => { const v = form[f]; return v && v.toString().trim() !== ""; })
-      && !Object.values(errors).some(Boolean);
+      && !Object.values(errors).some(Boolean)
+      && pincodeRegex.test(form.pincode)
+      && phoneRegex.test(form.contact)
+      && (!showBhkFor(form.propertyCategory) || !!form.propertyType)
+      && imageFiles.frontView.length > 0;
     setCanPublish(ok);
-  }, [form, errors]);
+  }, [form, errors, imageFiles]);
 
   const handleAddImages = (category, files) => {
+    const unsupported = files.filter((f) => !SHOWABLE_IMAGE.test(f.type));
+    if (unsupported.length) {
+      alert(`Please use JPG, PNG or WEBP photos. Skipped: ${unsupported.map((f) => f.name).join(", ")}`);
+      files = files.filter((f) => SHOWABLE_IMAGE.test(f.type));
+    }
     setImageFiles((prev) => {
       const merged = [...(prev[category] || []), ...files];
-      if (merged.length > 3) { alert("Max 3 images per category."); return { ...prev, [category]: merged.slice(0, 3) }; }
+      const max = maxPhotosFor(category);
+      if (merged.length > max) { alert(`Max ${max} images in this section.`); return { ...prev, [category]: merged.slice(0, max) }; }
       return { ...prev, [category]: merged };
     });
   };
@@ -145,10 +153,12 @@ export default function AddProperty() {
       const shown = new Set(basicDetailFieldsFor(form).map((f) => f.key));
       BASIC_DETAIL_KEYS.forEach((k) => { if (!shown.has(k)) delete payload[k]; });
       delete payload.plotArea; delete payload.landArea; delete payload.landUnit;
+      payload.propertyType = showBhkFor(form.propertyCategory) ? [form.propertyType] : [];
+      const shownSections = new Set(imageSectionsFor(form.propertyCategory).map((s) => s.key));
       for (const field of Object.keys(EMPTY_IMAGES)) {
-        if (imageFiles[field]?.length > 0) {
+        if (shownSections.has(field) && imageFiles[field]?.length > 0) {
           const urls = [];
-          for (const file of imageFiles[field]) { const url = await uploadToS3(file); if (url) urls.push(url); }
+          for (const file of imageFiles[field]) { const url = await uploadToS3(file); if (!url) throw new Error(`Could not upload "${file.name}". Please try again.`); urls.push(url); }
           payload[field] = urls;
         } else { payload[field] = []; }
       }
@@ -193,7 +203,7 @@ export default function AddProperty() {
             />
             <BasicInfoForm form={form} errors={errors} propertyTab={propertyTab} listingType={form.listingType} onChange={handleChange} onValidate={validateField} />
             <LocationForm form={form} errors={errors} states={states} cities={cities} onChange={handleChange} onValidate={validateField} />
-            <MediaGallery imageFiles={imageFiles} onAdd={handleAddImages} onRemove={handleRemoveImage} />
+            <MediaGallery category={form.propertyCategory} imageFiles={imageFiles} onAdd={handleAddImages} onRemove={handleRemoveImage} />
             <VideoLinksForm form={form} errors={errors} onChange={handleChange} onValidate={validateField} />
 
             <div className="hidden sm:flex items-center justify-between gap-3 pt-2">

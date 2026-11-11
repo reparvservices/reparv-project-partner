@@ -7,6 +7,8 @@ import {
   useMemo,
 } from "react";
 import { fetchPartnerSubscription } from "../lib/partnerSubscription";
+
+const SUBSCRIPTION_RECHECK_MS = 30000;
 import {
   clearPartnerSession,
   getStoredPartnerSession,
@@ -116,7 +118,11 @@ export const AuthProvider = ({ children }) => {
       if (!silent) setSubscriptionReady(false);
       try {
         const status = await fetchPartnerSubscription(URI, currentUser);
-        setSubscription(status);
+        // A failed background check must not lock a partner out
+        if (status.failed && silent) return status;
+        setSubscription((prev) =>
+          JSON.stringify(prev) === JSON.stringify(status) ? prev : status,
+        );
         setIsActiveSubacription(Boolean(status.active));
         return status;
       } catch {
@@ -142,6 +148,25 @@ export const AuthProvider = ({ children }) => {
     }
     refreshSubscription();
   }, [authReady, user?.id, user?.role, refreshSubscription]);
+
+  // A plan can be activated from admin or another device while this tab is
+  // open, so keep checking instead of waiting for the next login.
+  useEffect(() => {
+    if (!authReady || !user?.id) return undefined;
+    const check = () => {
+      if (document.visibilityState === "visible") {
+        refreshSubscription(undefined, { silent: true });
+      }
+    };
+    const timer = setInterval(check, SUBSCRIPTION_RECHECK_MS);
+    window.addEventListener("focus", check);
+    document.addEventListener("visibilitychange", check);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", check);
+      document.removeEventListener("visibilitychange", check);
+    };
+  }, [authReady, user?.id, refreshSubscription]);
 
   const loginPartner = useCallback((roleId, loggedInUser, _token) => {
     const normalized = persistPartnerSession(roleId, loggedInUser);

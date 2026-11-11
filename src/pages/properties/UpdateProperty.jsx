@@ -244,7 +244,8 @@ export default function UpdateProperty() {
           const urls = [];
           for (const file of imageFiles[field]) {
             const url = await uploadToS3(file);
-            if (url) urls.push(url);
+            if (!url) throw new Error(`Could not upload "${file.name}". Please try again.`);
+            urls.push(url);
           }
           payload[field] = urls;
         }
