@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import backgroundimage from "../../assets/company/bgofourservices.png";
+import backgroundimage from "../../assets/company/bgofourservices.webp";
 import { services } from "../../utils";
 
 const ServicesSection = () => {

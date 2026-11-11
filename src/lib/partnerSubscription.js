@@ -1,4 +1,4 @@
-import { getSubscriptionSlugForUser } from "./partnerAuth";
+import { getSubscriptionSlugForUser } from "./partnerAuth.js";
 
 function resolveSubscriptionSlug(user) {
   return getSubscriptionSlugForUser(user);

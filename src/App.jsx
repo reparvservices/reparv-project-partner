@@ -30,7 +30,9 @@ const PartnerPage = lazy(() => import("./pages/PartnerPage"));
 const PartnersPage = lazy(
   () => import("./components/partnerPageUpdated/PartnersPage"),
 );
-import PaymentSuccessModal from "./components/pricingPages/PaymentSuccessModal";
+const PaymentSuccessModal = lazy(
+  () => import("./components/pricingPages/PaymentSuccessModal"),
+);
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const AccountCancellation = lazy(() => import("./pages/AccountCancellation"));

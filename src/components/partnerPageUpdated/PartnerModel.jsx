@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
-import houseImage from "../../assets/company/house.png";
+import houseImage from "../../assets/company/house.webp";
 import { useAuth } from "../../store/auth";
 import ReCAPTCHA from "react-google-recaptcha";
 

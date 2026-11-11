@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaHeadphones, FaUserCheck, FaUsers } from "react-icons/fa";
 import { TbLayoutDashboard } from "react-icons/tb";
-import Ex1 from "../../assets/projectpartner/ex1.png";
-import Ex2 from "../../assets/projectpartner/ex2.png";
-import StateBg from "../../assets/projectpartner/states.png";
+import Ex1 from "../../assets/projectpartner/ex1.webp";
+import Ex2 from "../../assets/projectpartner/ex2.webp";
+import StateBg from "../../assets/projectpartner/states.webp";
 import { services } from "../../utils";
 import MyAndroid from "../../assets/projectpartner/image.png";
 import StatsSection from "./StateSection";

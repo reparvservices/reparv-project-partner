@@ -69,6 +69,11 @@ function getActor() {
   return { user_id: null, user_role: null, fullname: "Me" };
 }
 
+// "Project Partner" -> project_partner (mirrors the backend's role normalisation)
+function normaliseRole(role) {
+  return String(role || "").trim().toLowerCase().replace(/\s+/g, "_");
+}
+
 // Build query-string injecting fresh actor creds every time
 function qs(extra = {}) {
   const { user_id, user_role } = getActor();
@@ -875,7 +880,7 @@ function SuggestedUsers({ actor }) {
             (u) =>
               !(
                 u.id === actor?.user_id &&
-                normaliseRole(u.role) === actor?.normalisedRole
+                normaliseRole(u.role) === normaliseRole(actor?.user_role)
               ),
           )
           .slice(0, 3);

@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../store/auth";
 import { useNavigate } from "react-router-dom";
-import jsPDF from "jspdf";
 import logo from "../../assets/billlogo.png";
 
 function PaymentSuccessModal() {
@@ -97,7 +96,9 @@ function PaymentSuccessModal() {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-  const handleDownloadInvoice = () => {
+  const handleDownloadInvoice = async () => {
+    // Load the PDF library only when an invoice is actually requested.
+    const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF("p", "mm", "a4");
     const pageWidth = doc.internal.pageSize.getWidth();
 

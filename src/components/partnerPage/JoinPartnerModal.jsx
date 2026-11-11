@@ -13,7 +13,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
-import popImage from "../../assets/projectpartner/pop-image.png";
+import popImage from "../../assets/projectpartner/pop-image.webp";
 import reparvLogo from "../../assets/layout/reparvMainLogo.svg";
 import { useAuth } from "../../store/auth";
 import { sendPartnerJoinOtp, completePartnerJoin } from "../../lib/partnerJoinApi";

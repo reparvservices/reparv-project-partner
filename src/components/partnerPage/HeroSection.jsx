@@ -3,8 +3,8 @@ import { HiOutlineShieldCheck } from "react-icons/hi";
 import { GoLocation } from "react-icons/go";
 import { FaUsers } from "react-icons/fa";
 
-import homeImg from "../../assets/home.png";
-import heroRightImg from "../../assets/laptophome.png";
+import homeImg from "../../assets/home.webp";
+import heroRightImg from "../../assets/laptophome.webp";
 import { usePartnerJoin } from "../../context/PartnerJoinContext";
 
 /* ---------- SMALL REUSABLE STAT ITEM ---------- */
