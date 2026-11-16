@@ -1,11 +1,49 @@
 /**
  * Razorpay Subscriptions (autopay) checkout for partner apps.
- * Canonical server routes (public, no JWT — uses body role + user_id):
+ * Server routes (login cookie required; body user_id/role must be the logged-in partner):
  *   POST /api/subscription/payment/create-subscription
  *   POST /api/subscription/payment/verify-subscription
  */
 
 const CHECKOUT_BASE = "/api/subscription/payment";
+
+/**
+ * Thrown when the customer was charged but the server could not confirm it right now
+ * (network drop, 5xx). The charge is safe: the server activates it from Razorpay's webhook.
+ */
+export class PaymentUnconfirmedError extends Error {
+  constructor(paymentId) {
+    super(
+      "Your payment was received, but we couldn't confirm it yet. Your plan will activate " +
+        "automatically in a few minutes. If it doesn't, contact support" +
+        (paymentId ? ` with payment ID ${paymentId}.` : "."),
+    );
+    this.name = "PaymentUnconfirmedError";
+    this.paymentId = paymentId;
+  }
+}
+
+/** Network failure, 5xx, or the server asking us to retry (409 + retry flag). */
+export function isTransientError(err) {
+  if (!err) return false;
+  if (!err.status) return true; // fetch rejected (offline / DNS / aborted)
+  return err.status >= 500 || (err.status === 409 && err.data?.retry === true);
+}
+
+/** Retry `fn` on transient errors with a growing delay; other errors are thrown immediately. */
+export async function retryTransient(fn, { attempts = 4, baseDelayMs = 1500 } = {}) {
+  let lastError;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (!isTransientError(err) || i === attempts - 1) throw err;
+      await new Promise((resolve) => setTimeout(resolve, baseDelayMs * (i + 1)));
+    }
+  }
+  throw lastError;
+}
 
 export function buildSubscriptionCheckoutBody({
   role,
@@ -160,12 +198,19 @@ export async function confirmPartnerSubscription({
     email: email || "",
   };
 
-  const res = await fetch(`${api}${CHECKOUT_BASE}/verify-subscription`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  return parseJsonResponse(res);
+  try {
+    return await retryTransient(async () => {
+      const res = await fetch(`${api}${CHECKOUT_BASE}/verify-subscription`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return parseJsonResponse(res);
+    });
+  } catch (err) {
+    // The customer has already paid: don't report a plain "payment failed".
+    if (isTransientError(err)) throw new PaymentUnconfirmedError(paymentId);
+    throw err;
+  }
 }

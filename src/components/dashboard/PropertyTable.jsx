@@ -70,7 +70,7 @@ export default function PropertyTable({
         } catch {}
         return (
           <div className="w-[120px] h-12 overflow-hidden flex items-center justify-center rounded-lg">
-            <img
+            <img loading="lazy" decoding="async"
               src={src}
               alt={row.propertyName}
               onClick={() => window.open(`https://www.reparv.in/property-info/${row.seoSlug}`, "_blank")}

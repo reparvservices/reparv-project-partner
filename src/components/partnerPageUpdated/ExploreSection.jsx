@@ -324,7 +324,7 @@ export default function ProjectPartnerSection() {
 
           {/* RIGHT IMAGES */}
           <div className="relative hidden xl:flex  justify-center  top-28 right-30 lg:justify-end">
-            <img
+            <img loading="lazy" decoding="async"
               src={Ex1}
               alt="discussion"
               className="w-full max-w-md
@@ -339,7 +339,7 @@ export default function ProjectPartnerSection() {
                          lg:rounded-[12px]
                        "
             />
-            <img
+            <img loading="lazy" decoding="async"
               src={Ex2}
               alt="presentation"
               className="hidden sm:block

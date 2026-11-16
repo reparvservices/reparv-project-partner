@@ -184,7 +184,7 @@ export default function Composer({ actor, onPosted }) {
                 <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                   {p.type === "video"
                     ? <video src={p.url} className="w-full h-full object-contain" />
-                    : <img src={p.url} alt="" className="w-full h-full object-contain" />}
+                    : <img loading="lazy" decoding="async" src={p.url} alt="" className="w-full h-full object-contain" />}
                   {uploading && uploadProg[i] !== undefined && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                       <span className="text-white text-xs font-bold">{uploadProg[i]}%</span>

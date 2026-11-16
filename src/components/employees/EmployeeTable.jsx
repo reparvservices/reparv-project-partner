@@ -1046,7 +1046,7 @@ function ViewModal({ emp, onClose }) {
       <div className="bg-white rounded-[16px] w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b sticky top-0 bg-white">
           <div className="flex items-center gap-3">
-            <img
+            <img loading="lazy" decoding="async"
               src={emp.avatar || `https://i.pravatar.cc/48?u=${emp.id}`}
               alt={emp.name}
               className="w-12 h-12 rounded-full object-cover ring-2 ring-gray-100"
@@ -1112,7 +1112,7 @@ function MobileCard({
   return (
     <div className="bg-white rounded-[18px] p-5 border border-gray-100 shadow-sm flex flex-col gap-4">
       <div className="flex items-start gap-3">
-        <img
+        <img loading="lazy" decoding="async"
           src={emp.avatar || `https://i.pravatar.cc/40?u=${emp.id}`}
           alt={emp.name}
           className="w-14 h-14 rounded-full object-cover shrink-0 ring-2 ring-gray-100"
@@ -1467,7 +1467,7 @@ export default function EmployeeTable({
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3 min-w-[160px]">
                           <div className="relative">
-                            <img
+                            <img loading="lazy" decoding="async"
                               src={
                                 emp.avatar ||
                                 `https://i.pravatar.cc/40?u=${emp.id}`

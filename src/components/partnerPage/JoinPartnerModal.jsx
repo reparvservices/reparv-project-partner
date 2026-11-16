@@ -47,7 +47,7 @@ function BrandPanel() {
       </div>
 
       <div className="flex w-full flex-1 items-center justify-center py-4">
-        <img
+        <img loading="lazy" decoding="async"
           src={popImage}
           alt="Reparv Partner"
           className="h-auto w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[320px] max-h-[240px] sm:max-h-[300px] lg:max-h-[420px] object-contain"

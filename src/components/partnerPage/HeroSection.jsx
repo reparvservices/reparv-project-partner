@@ -163,7 +163,7 @@ const HeroSection = () => {
 
         {/* ---------- MOBILE IMAGE ---------- */}
         <div className="block lg:hidden w-full">
-          <img src={homeImg} alt="Home" className="w-full object-cover" />
+          <img loading="lazy" decoding="async" src={homeImg} alt="Home" className="w-full object-cover" />
         </div>
 
         {/* ---------- DESKTOP IMAGE ---------- */}

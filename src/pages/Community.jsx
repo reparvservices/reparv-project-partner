@@ -90,6 +90,7 @@ async function apiFetch(path, options = {}) {
   let res;
   try {
     res = await fetch(url, {
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       ...options,
     });
@@ -169,7 +170,7 @@ function Avatar({ src, name, size = 40 }) {
     : "?";
   if (src && !err) {
     return (
-      <img
+      <img loading="lazy" decoding="async"
         src={src}
         alt={name}
         style={{ width: size, height: size }}
@@ -636,7 +637,7 @@ function PostCard({ post: initialPost, onRefresh }) {
           className={`grid gap-2 ${mediaUrls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}
         >
           {mediaUrls.slice(0, 4).map((url, i) => (
-            <img
+            <img loading="lazy" decoding="async"
               key={i}
               src={url}
               alt="media"
@@ -805,7 +806,7 @@ function ActiveMembers() {
       <div className="grid grid-cols-5 gap-2.5">
         {MEMBERS.map((src, i) =>
           src ? (
-            <img
+            <img loading="lazy" decoding="async"
               key={i}
               src={src}
               alt=""
@@ -839,7 +840,7 @@ function SuggestedGroups() {
             className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
           >
             {g.image ? (
-              <img
+              <img loading="lazy" decoding="async"
                 src={g.image}
                 alt={g.name}
                 className="w-11 h-11 rounded-[8px] object-cover shrink-0"

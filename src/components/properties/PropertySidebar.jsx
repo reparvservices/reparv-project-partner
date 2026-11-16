@@ -80,7 +80,7 @@ export default function PropertySidebar({ properties = [], counts = {} }) {
                 }
               >
                 <div className="flex gap-3 items-center">
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={getImage(item)}
                     alt={item.propertyName}
                     className="w-12 h-12 rounded-xl object-cover shrink-0"

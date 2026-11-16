@@ -33,6 +33,7 @@ export const normaliseRole = (role) => {
 // ─── API helpers ──────────────────────────────────────────────────────────────
 export const api = async (path, opts = {}) => {
   const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     ...opts,
   });
@@ -43,6 +44,7 @@ export const api = async (path, opts = {}) => {
 
 export const followApi = async (path, opts = {}) => {
   const res = await fetch(`${FOLLOW_API_BASE}${path}`, {
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     ...opts,
   });

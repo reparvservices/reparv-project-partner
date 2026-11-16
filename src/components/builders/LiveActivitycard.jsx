@@ -13,7 +13,7 @@ export default function LiveActivityCard({ item }) {
 
       {/* Avatar + Name + Time */}
       <div className="flex items-center gap-3">
-        <img
+        <img loading="lazy" decoding="async"
           src={item.image}
           alt={item.name}
           className="w-12 h-12 rounded-[14px] object-cover shrink-0"
@@ -26,7 +26,7 @@ export default function LiveActivityCard({ item }) {
 
       {/* Property Image with overlay tag */}
       <div className="relative rounded-[14px] overflow-hidden">
-        <img
+        <img loading="lazy" decoding="async"
           src={item.image}
           alt={item.name}
           className="w-full h-[125px] object-cover block"

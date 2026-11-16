@@ -236,7 +236,7 @@ export default function AddEnquiry({ onBack }) {
               {/* Selected property card */}
               {selectedProperty && (
                 <div className="flex items-center gap-3 border border-gray-100 rounded-[8px] p-3 bg-gray-50">
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={selectedProperty.image}
                     alt={selectedProperty.name}
                     className="w-14 h-12 rounded-[6px] object-cover shrink-0"

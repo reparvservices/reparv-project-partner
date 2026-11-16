@@ -509,7 +509,7 @@ export default function Menu() {
           {fetching ? (
             <div className="w-20 h-20 rounded-full bg-[#EEE9FF] animate-pulse mb-3" />
           ) : (
-            <img
+            <img loading="lazy" decoding="async"
               src={
                 user.userimage ||
                 "https://ui-avatars.com/api/?name=" +

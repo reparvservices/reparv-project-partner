@@ -58,6 +58,7 @@ export default function Profile() {
 
   const fApi = async (path, opts = {}) => {
     const res = await fetch(`${URI}/api/follow${path}`, {
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       ...opts,
     });
@@ -80,6 +81,7 @@ export default function Profile() {
     const API_BASE = import.meta.env.VITE_BACKEND_URL + "/api/feed";
 
     const res = await fetch(`${API_BASE}${path}`, {
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
     });
 

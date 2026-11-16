@@ -148,7 +148,7 @@ function TrendingPosts({ actor }) {
           >
             <div className="relative shrink-0">
               {thumb && !isVideo(thumb) ? (
-                <img
+                <img loading="lazy" decoding="async"
                   src={thumb}
                   alt=""
                   className="w-11 h-11 rounded-xl object-cover"

@@ -80,7 +80,7 @@ const MobileAppSection = () => {
         {/* MOBILE IMAGE */}
         <div className="relative flex justify-center items-center z-10">
           {/* MAIN MOBILE IMAGE */}
-          <img
+          <img loading="lazy" decoding="async"
             src={mobileAppImage}
             alt="Mobile App"
             className="
@@ -315,7 +315,7 @@ const MobileAppSection = () => {
       </div>
       {/* Store Buttons */}
       <div className="flex gap-4 mt-20 flex-wrap justify-center">
-        <img
+        <img loading="lazy" decoding="async"
           src={ios}
           alt="App Store"
           className="h-12 sm:h-15 cursor-pointer transition-transform hover:scale-110"
@@ -325,7 +325,7 @@ const MobileAppSection = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <img
+          <img loading="lazy" decoding="async"
             src={android}
             alt="Google Play"
             className="h-12 sm:h-15 cucursor-pointer transition-transform hover:scale-110"

@@ -52,7 +52,7 @@ export default function DashboardHeader() {
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
         </button>
 
-        <img
+        <img loading="lazy" decoding="async"
           onClick={() => navigate("/app/profile")}
           src={getImageURI(user?.userImage || user?.userimage)}
           alt="avatar"

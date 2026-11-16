@@ -17,6 +17,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   base: '/',
+  esbuild: { drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [] },
   server: {
     allowedHosts: true,
     proxy: {

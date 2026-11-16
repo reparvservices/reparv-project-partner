@@ -29,7 +29,7 @@ export default function MediaGallery({ category, imageFiles, onAdd, onRemove }) 
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {files.map((file, i) => (
                 <div key={i} className="relative h-24 rounded-xl overflow-hidden group border border-gray-100">
-                  <img src={URL.createObjectURL(file)} alt={`${label} ${i + 1}`} className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={URL.createObjectURL(file)} alt={`${label} ${i + 1}`} className="w-full h-full object-cover" />
                   <button
                     type="button"
                     aria-label={`Remove ${label} photo`}

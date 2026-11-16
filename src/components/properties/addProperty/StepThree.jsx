@@ -40,7 +40,7 @@ function ImageCard({ file, index, onRemove, onReplace }) {
   const url = file instanceof File ? URL.createObjectURL(file) : file;
   return (
     <div className="relative group aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
-      <img src={url} alt="" className="w-full h-full object-cover" />
+      <img loading="lazy" decoding="async" src={url} alt="" className="w-full h-full object-cover" />
       {/* overlay on hover */}
       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
         <label className="cursor-pointer w-8 h-8 rounded-full bg-white/90 flex items-center justify-center text-gray-700 hover:bg-white transition">

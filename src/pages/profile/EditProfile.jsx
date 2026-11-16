@@ -164,7 +164,7 @@ function CoverPlaceholder({ coverFile, coverSrc, onCoverChange }) {
       }}
     >
       {(coverFile || coverSrc) && (
-        <img
+        <img loading="lazy" decoding="async"
           src={coverFile ? URL.createObjectURL(coverFile) : coverSrc}
           className="absolute inset-0 w-full h-full object-cover"
           alt="cover"
@@ -213,7 +213,7 @@ function StepProfileHeader({
       />
       <div className="flex flex-col items-center -mt-16 relative z-10">
         <div className="relative">
-          <img
+          <img loading="lazy" decoding="async"
             src={avatarFile ? URL.createObjectURL(avatarFile) : avatarSrc}
             alt="avatar"
             className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
@@ -881,7 +881,7 @@ export default function EditProfile() {
                 }}
               >
                 {(coverFile || coverSrc) && (
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={coverFile ? URL.createObjectURL(coverFile) : coverSrc}
                     className="absolute inset-0 w-full h-full object-cover"
                     alt="cover"
@@ -890,7 +890,7 @@ export default function EditProfile() {
               </div>
               <div className="flex flex-col items-center pb-5 -mt-12 px-5">
                 <div className="relative">
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={
                       avatarFile ? URL.createObjectURL(avatarFile) : avatarSrc
                     }
@@ -1044,7 +1044,7 @@ export default function EditProfile() {
               }}
             >
               {(coverFile || coverSrc) && (
-                <img
+                <img loading="lazy" decoding="async"
                   src={coverFile ? URL.createObjectURL(coverFile) : coverSrc}
                   className="absolute inset-0 w-full h-full object-cover"
                   alt="cover"
@@ -1084,7 +1084,7 @@ export default function EditProfile() {
             </div>
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-                <img
+                <img loading="lazy" decoding="async"
                   src={avatarFile ? URL.createObjectURL(avatarFile) : avatarSrc}
                   className="w-16 h-16 rounded-full object-cover border-2 border-white shadow"
                   alt="avatar"

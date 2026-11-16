@@ -50,7 +50,7 @@ function PaymentCard({ image, type, amount, date, isToken }) {
   return (
     <div className="border border-slate-100 rounded-2xl p-3 bg-slate-50">
       <div className="flex gap-3">
-        <img
+        <img loading="lazy" decoding="async"
           src={image}
           alt="Payment"
           onClick={() => window.open(image, "_blank")}
@@ -183,7 +183,7 @@ export default function CustomerModals({
             </label>
             {selectedImage && (
               <div className="relative mt-2">
-                <img src={URL.createObjectURL(selectedImage)} alt="preview" className="w-full rounded-xl object-cover max-h-48" />
+                <img loading="lazy" decoding="async" src={URL.createObjectURL(selectedImage)} alt="preview" className="w-full rounded-xl object-cover max-h-48" />
                 <button type="button" onClick={() => setSelectedImage(null)} className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">✕</button>
               </div>
             )}

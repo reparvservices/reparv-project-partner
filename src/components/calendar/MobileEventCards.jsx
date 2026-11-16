@@ -25,7 +25,7 @@ function EventCard({ time, title, sub, subIcon, accent, assignedTo, assignedAvat
               <span className="text-[13px] text-gray-400">Assigned to:</span>
               <span className="text-[13px] font-semibold text-gray-700">{assignedTo}</span>
               {assignedAvatar && (
-                <img
+                <img loading="lazy" decoding="async"
                   src={assignedAvatar}
                   alt={assignedTo}
                   className="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm"

@@ -183,7 +183,7 @@ export default function Dashboard() {
           onClick={() => navigate("/app/profile")}
           className="w-15 h-15 rounded-full overflow-hidden border-2 border-gray-200 cursor-pointer"
         >
-          <img
+          <img loading="lazy" decoding="async"
             src={getImageURI(user?.userImage)}
             alt="profile"
             className="w-full h-full object-cover"

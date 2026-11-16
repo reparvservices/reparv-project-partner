@@ -75,7 +75,7 @@ function StoryViewer({ groups, gIdx, sIdx, onAdvance, onClose }) {
             className="w-full h-full object-contain"
           />
         ) : (
-          <img
+          <img loading="lazy" decoding="async"
             src={story.media_url}
             className="w-full h-full object-contain"
             alt=""
@@ -257,7 +257,7 @@ function StoryUploadModal({ actor, onClose, onUploaded }) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <img
+              <img loading="lazy" decoding="async"
                 src={preview.url}
                 alt=""
                 className="w-full h-full object-cover"
@@ -282,7 +282,7 @@ function StoryUploadModal({ actor, onClose, onUploaded }) {
                   className="w-full h-full object-cover opacity-70"
                 />
               ) : (
-                <img
+                <img loading="lazy" decoding="async"
                   src={preview.url}
                   alt=""
                   className="w-full h-full object-cover opacity-70"

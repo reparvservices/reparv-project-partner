@@ -47,7 +47,7 @@ function ExistingImages({ images }) {
           className={`relative cursor-pointer rounded-xl overflow-hidden border-2 ${i === 0 ? "border-[#5323DC]" : "border-slate-100"}`}
           onClick={() => window.open(getImageURI(img), "_blank")}
         >
-          <img
+          <img loading="lazy" decoding="async"
             src={getImageURI(img)}
             alt=""
             className="w-full h-24 object-cover"
@@ -72,7 +72,7 @@ function NewImagePreviews({ files, category, onRemove }) {
           key={i}
           className="relative rounded-xl overflow-hidden border border-slate-100"
         >
-          <img
+          <img loading="lazy" decoding="async"
             src={URL.createObjectURL(file)}
             alt=""
             className="w-full h-24 object-cover"

@@ -41,7 +41,7 @@ function FAQSection({ location = "Partners Project Partner Page" }) {
       <section className="w-full max-w-[1380px]  mx-auto grid md:grid-cols-2 gap-10 p-4 md:p-8 md:pb-15  ">
         {/* LEFT SIDE */}
         <div className="hidden md:flex items-center">
-          <img
+          <img loading="lazy" decoding="async"
             src={FAQLeftImage}
             alt="FAQ Image"
             className="w-full object-cover"

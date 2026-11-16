@@ -95,7 +95,7 @@ function ProfileSummaryCard() {
       {/* Avatar */}
       <div className="relative -mt-10 flex justify-center">
         <div className="relative">
-          <img
+          <img loading="lazy" decoding="async"
             src="https://i.pravatar.cc/150?img=47"
             className="w-20 h-20 rounded-full border-4 border-white object-cover"
           />

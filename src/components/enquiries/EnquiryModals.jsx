@@ -750,7 +750,7 @@ export default function EnquiryModals({
                     </label>
                     {selectedImage && (
                       <div className="relative mt-2">
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={URL.createObjectURL(selectedImage)}
                           alt="preview"
                           className="w-full rounded-xl object-cover"

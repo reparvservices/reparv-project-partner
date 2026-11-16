@@ -118,7 +118,7 @@ const JoinStepsSection = () => {
 
     "
           >
-            <img
+            <img loading="lazy" decoding="async"
               src={mobileView}
               alt="Mobile App Preview"
               className="w-full h-full object-contain"

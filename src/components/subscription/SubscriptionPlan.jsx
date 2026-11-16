@@ -16,6 +16,7 @@ import {
   createPartnerSubscriptionSession,
   openRazorpaySubscriptionCheckout,
   confirmPartnerSubscription,
+  PaymentUnconfirmedError,
 } from "../../utils/subscriptionAutopay.js";
 import {
   activatePartnerTrial,
@@ -111,9 +112,10 @@ export default function SubscriptionPlan({ plan, trialUsed = false }) {
         finalAmount: total,
       });
 
-      const keyId = session.key || import.meta.env.VITE_RAZORPAY_KEY_ID || "";
+      // The key always comes from the server, so no payment key is baked into the web bundle.
+      const keyId = session.key || "";
       if (!keyId) {
-        throw new Error("Missing Razorpay key. Set VITE_RAZORPAY_KEY_ID in .env");
+        throw new Error("Payment is not available right now. Please try again later.");
       }
 
       const response = await openRazorpaySubscriptionCheckout({
@@ -143,7 +145,13 @@ export default function SubscriptionPlan({ plan, trialUsed = false }) {
       navigate("/app/dashboard", { replace: true });
     } catch (err) {
       const msg = err?.message || err?.error?.description || "Payment failed";
-      if (msg !== "Checkout closed") {
+      if (err instanceof PaymentUnconfirmedError) {
+        // Charged, just not confirmed yet: tell the truth and pick up the plan if it is active now.
+        alert(msg);
+        await refreshSubscription(user, { silent: true }).catch(() => {});
+        setShowSubscription(false);
+        navigate("/app/dashboard", { replace: true });
+      } else if (msg !== "Checkout closed") {
         console.error(err);
         alert(msg);
       }

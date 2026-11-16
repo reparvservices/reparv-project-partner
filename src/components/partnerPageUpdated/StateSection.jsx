@@ -240,7 +240,7 @@ const StatsAndBenefits = () => {
               )}
 
               <div className="flex flex-col items-center gap-3 text-center">
-                <img
+                <img loading="lazy" decoding="async"
                   src={item.icon}
                   alt={item.title}
                   className="w-[54px] h-[54px] object-cover rounded-lg"
@@ -314,7 +314,7 @@ const StatsAndBenefits = () => {
         group-hover:z-30
       "
                 >
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={item.icon}
                     alt={item.title}
                     className="w-full h-full object-contain"

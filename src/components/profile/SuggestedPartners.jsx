@@ -9,6 +9,7 @@ const ACTOR = { user_id: 1411, user_role: "Sales Person" }; // ← from Redux
 
 const followApi = async (path, opts = {}) => {
   const res = await fetch(`${FOLLOW_API_BASE}${path}`, {
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     ...opts,
   });
@@ -113,7 +114,7 @@ export default function SuggestedPartners() {
           return (
             <div key={key} className="flex items-center justify-between py-3">
               <div className="flex items-center gap-3">
-                <img
+                <img loading="lazy" decoding="async"
                   src={avatarSrc}
                   alt={u.fullname}
                   onError={(e) => {

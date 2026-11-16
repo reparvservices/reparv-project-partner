@@ -348,7 +348,7 @@ export function ViewPartnerModal({ show, onClose, partner, URI }) {
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{label}</p>
               <div className="grid grid-cols-2 gap-3">
                 {imgs.map((img, i) => (
-                  <img key={i} src={`${URI}${img}`} alt={`${label} ${i+1}`}
+                  <img loading="lazy" decoding="async" key={i} src={`${URI}${img}`} alt={`${label} ${i+1}`}
                     onClick={() => window.open(`${URI}${img}`, "_blank")}
                     className="w-full rounded-xl object-cover cursor-pointer border border-slate-100" />
                 ))}

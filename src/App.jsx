@@ -11,18 +11,19 @@ import Menu from "./layout/Menu";
 // ── Auth Guard ────────────────────────────────────────────────────────────────
 import { useAuth } from "./store/auth";
 import Login from "./pages/Login";
-import PropertiesFlatAndPlotInfo from "./pages/properties/PropertiesFlatAndPlotInfo";
 
 // for Navigation
 import { useNavigate } from "react-router-dom";
-import Tickets from "./pages/tickets/Tickets";
-import AddTicket from "./pages/tickets/AddTicket";
-import EditProfile from "./pages/profile/EditProfile";
 import ScrollToTop from "./utils/ScrollToTop";
 
 // Refer
-import Refer from "./pages/refer/Refer";
-import ReferScreen from "./pages/refer/ReferScreen";
+
+const PropertiesFlatAndPlotInfo = lazy(() => import("./pages/properties/PropertiesFlatAndPlotInfo"));
+const Tickets = lazy(() => import("./pages/tickets/Tickets"));
+const AddTicket = lazy(() => import("./pages/tickets/AddTicket"));
+const EditProfile = lazy(() => import("./pages/profile/EditProfile"));
+const Refer = lazy(() => import("./pages/refer/Refer"));
+const ReferScreen = lazy(() => import("./pages/refer/ReferScreen"));
 
 // ── Lazy-loaded pages ─────────────────────────────────────────────────────────
 // Public

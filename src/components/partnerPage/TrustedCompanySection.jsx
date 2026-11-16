@@ -210,7 +210,7 @@ export default function TrustedSection() {
           }`}
         >
           {/* PERSON IMAGE – HIDE ON MOBILE  */}
-          <img
+          <img loading="lazy" decoding="async"
             src={person}
             alt="Happy Client"
             className={`
@@ -285,7 +285,7 @@ function Stat({ icon, value, label }) {
     <div className="flex items-center sm:items-start gap-4 sm:gap-2 justify-start sm:justify-center w-full">
       {/* ICON BOX (FIXED SIZE) */}
       <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#5E23DC] rounded-lg flex items-center justify-center">
-        <img
+        <img loading="lazy" decoding="async"
           src={icon}
           alt={label}
           className="w-6 h-6 sm:w-7 sm:h-7 object-contain"

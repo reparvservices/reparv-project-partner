@@ -49,3 +49,6 @@ coverage/
 
 # Mac system file (optional if you're not on macOS)
 .AppleDouble
+
+# macOS metadata files created on external drives
+._*

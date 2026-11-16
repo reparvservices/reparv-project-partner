@@ -48,7 +48,7 @@ export default function ProfileHeader({
             title="View public profile"
             className="w-[100px] h-[100px] p-1 rounded-full border border-gray-200 shadow-[0_0_0_2px_#00000014] flex-shrink-0 hover:ring-2 hover:ring-violet-400 transition-all cursor-pointer"
           >
-            <img
+            <img loading="lazy" decoding="async"
               src={avatarSrc}
               alt={user?.fullname}
               onError={(e) => {

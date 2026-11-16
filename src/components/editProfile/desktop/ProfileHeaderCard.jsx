@@ -16,7 +16,7 @@ export default function ProfileHeaderCard() {
         {/* Avatar */}
         <div className="relative -mt-12 flex justify-center">
           <div className="relative">
-            <img
+            <img loading="lazy" decoding="async"
               src="https://i.pravatar.cc/150?img=47"
               className="w-24 h-24 rounded-full border-4 border-white object-cover"
             />
@@ -84,7 +84,7 @@ export default function ProfileHeaderCard() {
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center gap-4">
-          <img
+          <img loading="lazy" decoding="async"
             src="https://i.pravatar.cc/150?img=47"
             className="w-16 h-16 rounded-full object-cover"
           />

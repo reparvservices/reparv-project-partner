@@ -147,7 +147,7 @@ export default function PropertyCard({ property: p, onAction, onCommissionClick 
 
       {/* Image */}
       <div className="relative">
-        <img
+        <img loading="lazy" decoding="async"
           src={imageSrc}
           alt={p.propertyName}
           className="w-full h-48 md:h-64 object-cover cursor-pointer"

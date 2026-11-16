@@ -16,6 +16,7 @@ const api = async (path) => {
   const API_BASE = import.meta.env.VITE_BACKEND_URL + "/api/feed";
 
   const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
   });
 
@@ -124,7 +125,7 @@ function PostsTab() {
                 </span>
               )}
               {thumb ? (
-                <img
+                <img loading="lazy" decoding="async"
                   src={thumb}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   alt=""
@@ -187,7 +188,7 @@ function ReelsTab() {
               className="relative aspect-[9/16] rounded-xl overflow-hidden group cursor-pointer bg-gray-900"
             >
               {poster ? (
-                <img
+                <img loading="lazy" decoding="async"
                   src={poster}
                   className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
                   alt=""
@@ -264,7 +265,7 @@ function SavedTab() {
               className="relative aspect-square rounded-xl overflow-hidden group cursor-pointer bg-gray-100"
             >
               {thumb ? (
-                <img
+                <img loading="lazy" decoding="async"
                   src={thumb}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   alt=""

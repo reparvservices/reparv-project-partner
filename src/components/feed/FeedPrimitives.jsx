@@ -35,12 +35,12 @@ export function Avatar({ src, name = "", size = 40, ring = false, ringHex = "#7c
         <div className="rounded-full overflow-hidden bg-violet-100 w-full h-full flex items-center justify-center"
           style={{ width: size - 4, height: size - 4 }}>
           {src
-            ? <img src={src} alt={name} className="w-full h-full object-cover rounded-full" />
+            ? <img loading="lazy" decoding="async" src={src} alt={name} className="w-full h-full object-cover rounded-full" />
             : <span>{initials || "?"}</span>}
         </div>
       ) : (
         src
-          ? <img src={src} alt={name} className="w-full h-full object-cover" />
+          ? <img loading="lazy" decoding="async" src={src} alt={name} className="w-full h-full object-cover" />
           : <span>{initials || "?"}</span>
       )}
     </div>

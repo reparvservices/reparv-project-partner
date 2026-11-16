@@ -184,7 +184,7 @@ export default function AddPropertyMobile() {
               </div>
 
               <div className="bg-white border rounded-xl overflow-hidden">
-                <img
+                <img loading="lazy" decoding="async"
                   src="https://images.unsplash.com/photo-1502673530728-f79b4cab31b1?w=400"
                   className="h-32 w-full object-cover"
                 />

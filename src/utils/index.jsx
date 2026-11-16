@@ -1411,7 +1411,7 @@ export const planIcons = {
       strokeWidth="2.9"
       strokeLinecap="round"
       strokeLinejoin="round"
-      class="lucide lucide-circle-star-icon lucide-circle-star"
+      className="lucide lucide-circle-star-icon lucide-circle-star"
     >
       <path d="M11.051 7.616a1 1 0 0 1 1.909.024l.737 1.452a1 1 0 0 0 .737.535l1.634.256a1 1 0 0 1 .588 1.806l-1.172 1.168a1 1 0 0 0-.282.866l.259 1.613a1 1 0 0 1-1.541 1.134l-1.465-.75a1 1 0 0 0-.912 0l-1.465.75a1 1 0 0 1-1.539-1.133l.258-1.613a1 1 0 0 0-.282-.867l-1.156-1.152a1 1 0 0 1 .572-1.822l1.633-.256a1 1 0 0 0 .737-.535z" />
       <circle cx="12" cy="12" r="10" />
@@ -1429,7 +1429,7 @@ export const planIcons = {
       strokeWidth="2.9"
       strokeLinecap="round"
       strokeLinejoin="round"
-      class="lucide lucide-badge-cent-icon lucide-badge-cent"
+      className="lucide lucide-badge-cent-icon lucide-badge-cent"
     >
       <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
       <path d="M12 7v10" />

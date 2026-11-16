@@ -88,7 +88,7 @@ function Avatar({ name, imageSrc, size = "md" }) {
       <div
         className={`${sizeClass} rounded-full overflow-hidden shrink-0 border-2 border-slate-100`}
       >
-        <img
+        <img loading="lazy" decoding="async"
           src={imageSrc}
           alt={name}
           className="w-full h-full object-cover"
@@ -482,7 +482,7 @@ function DesktopCard({ item, onAction, isActiveSubscription, enquiryFilter }) {
                 );
             }}
           >
-            <img
+            <img loading="lazy" decoding="async"
               src={imageSrc}
               alt={item.customer}
               className="w-full h-full object-cover"

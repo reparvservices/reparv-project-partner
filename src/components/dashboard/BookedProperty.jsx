@@ -55,7 +55,7 @@ function PropertyCard({ item }) {
         className="w-full h-42 overflow-hidden cursor-pointer"
         onClick={() => item.seoSlug && window.open("https://www.reparv.in/property-info/" + item.seoSlug, "_blank")}
       >
-        <img src={img} alt={item.category} className="w-full h-full object-contain" />
+        <img loading="lazy" decoding="async" src={img} alt={item.category} className="w-full h-full object-contain" />
       </div>
 
       {/* Body */}

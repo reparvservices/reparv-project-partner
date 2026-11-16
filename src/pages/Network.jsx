@@ -26,6 +26,7 @@ const normaliseRole = (role) => {
 
 const fApi = async (path, opts = {}) => {
   const res = await fetch(`${FOLLOW_BASE}${path}`, {
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     ...opts,
   });
@@ -118,7 +119,7 @@ function Avatar({ src, name = "", size = 48 }) {
 
   if (src && !imgErr) {
     return (
-      <img
+      <img loading="lazy" decoding="async"
         src={src}
         alt={name}
         onError={() => setImgErr(true)}

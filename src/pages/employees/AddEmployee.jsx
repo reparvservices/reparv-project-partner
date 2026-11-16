@@ -420,7 +420,7 @@ export default function AddEmployee({
                     <div className={`border border-dashed rounded-[6px] px-4 py-5 flex items-center gap-4 transition-all ${photoPreview ? "border-violet-300 bg-violet-50/20" : "border-gray-200 bg-gray-50 hover:border-violet-300 hover:bg-violet-50/20"}`}>
                       {photoPreview ? (
                         <>
-                          <img src={photoPreview} alt="Preview" className="w-14 h-14 rounded-full object-cover shrink-0 ring-2 ring-violet-200" />
+                          <img loading="lazy" decoding="async" src={photoPreview} alt="Preview" className="w-14 h-14 rounded-full object-cover shrink-0 ring-2 ring-violet-200" />
                           <div>
                             <p className="text-[13px] font-semibold text-gray-700 truncate max-w-[180px]">{photoFile?.name || "Current photo"}</p>
                             <p className="text-[11.5px] text-violet-500 mt-0.5">Click to change</p>

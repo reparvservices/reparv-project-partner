@@ -56,7 +56,7 @@ export default function FeedNavbar({ actor, unread, onBell }) {
             to="/app/profile"
             className="ml-1 w-8 h-8 rounded-full overflow-hidden cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-violet-200"
           >
-            <img
+            <img loading="lazy" decoding="async"
               src={getImageURI(actor?.user?.userImage)}
               alt="profile"
               className="w-full h-full object-cover"

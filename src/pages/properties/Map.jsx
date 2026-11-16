@@ -170,7 +170,7 @@ function DesktopPropertyCard({ row, isActive, onClick }) {
         }`}
     >
       <div className="relative flex-shrink-0">
-        <img
+        <img loading="lazy" decoding="async"
           src={imageSrc}
           onError={(e) => {
             e.target.src = propertyPicture;
@@ -226,7 +226,7 @@ function MobilePropertyCard({ row }) {
 
   return (
     <div className="flex gap-4 py-4 border-b border-gray-100 last:border-0">
-      <img
+      <img loading="lazy" decoding="async"
         src={imageSrc}
         onError={(e) => {
           e.target.src = propertyPicture;

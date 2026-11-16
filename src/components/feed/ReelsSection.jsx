@@ -18,7 +18,7 @@ function ReelThumb({ post, onOpen }) {
     >
       <div className="relative rounded-2xl overflow-hidden bg-gray-900" style={{ width: 120, height: 200 }}>
         {thumb && !isVideo(thumb)
-          ? <img src={thumb} alt="" className="w-full h-full object-contain transition-transform group-hover:scale-105 duration-300" />
+          ? <img loading="lazy" decoding="async" src={thumb} alt="" className="w-full h-full object-contain transition-transform group-hover:scale-105 duration-300" />
           : <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
               <Icon name="film" size={32} className="text-gray-600" />
             </div>}

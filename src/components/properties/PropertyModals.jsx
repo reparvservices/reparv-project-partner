@@ -75,7 +75,7 @@ function FilePicker({ label, accept, file, onChange, hint }) {
       {hint && <p className="text-xs text-red-400">{hint}</p>}
       {file && file.type?.startsWith("image/") && (
         <div className="relative mt-2">
-          <img
+          <img loading="lazy" decoding="async"
             src={URL.createObjectURL(file)}
             alt="preview"
             className="w-full rounded-xl object-cover max-h-40"
