@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../store/auth";
-import { uploadToS3 } from "../../utils/s3";
+import VenueForm from "./VenueForm";
 
 const GRADIENT = "linear-gradient(110.73deg, #5323DC 0%, #8E61FF 97.17%)";
-const inputCls =
-  "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#5323DC] bg-white";
-const TYPES = ["villa", "hall", "banquet", "farmhouse", "resort", "lawn", "other"];
-const AMENITIES = ["Wi-Fi", "Parking", "Pool", "AC", "Kitchen", "Garden", "Stage", "Sound system", "Power backup", "Catering"];
 const STATUS = {
   draft: "bg-gray-100 text-gray-700",
   pending: "bg-yellow-100 text-yellow-800",
@@ -19,30 +15,14 @@ const STATUS = {
 };
 const rupees = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
-const EMPTY = {
-  title: "", type: "villa", price_model: "night", base_price: "", weekend_price: "", cleaning_fee: "",
-  capacity: "", bedrooms: "", city: "", state: "", address: "", description: "", rules: "",
-  deposit_percent: 100, min_nights: 1, max_nights: 30, cancellation_policy: "moderate",
-  amenities: [], images: [],
-};
-
-function Field({ label, children }) {
-  return (
-    <label className="block">
-      <span className="block text-sm font-semibold text-gray-800 mb-1">{label}</span>
-      {children}
-    </label>
-  );
-}
 
 export default function Venues() {
   const { URI, setLoading } = useAuth();
   const [tab, setTab] = useState("listings");
   const [listings, setListings] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [form, setForm] = useState(null); // null = list view, object = editing/creating
-  const [editingId, setEditingId] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const [formOpen, setFormOpen] = useState(false); // true = wizard visible
+  const [editing, setEditing] = useState(null); // listing being edited, or null for a new one
 
   const call = useCallback(
     async (path, options = {}) => {
@@ -75,53 +55,21 @@ export default function Venues() {
     load();
   }, [load]);
 
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const openEdit = (l) => { setEditing(l); setFormOpen(true); };
+  const openNew = () => { setEditing(null); setFormOpen(true); };
 
-  const openEdit = (l) => {
-    const parse = (v) => (typeof v === "string" ? JSON.parse(v || "[]") : v || []);
-    setEditingId(l.id);
-    setForm({ ...EMPTY, ...l, weekend_price: l.weekend_price ?? "", bedrooms: l.bedrooms ?? "", amenities: parse(l.amenities), images: parse(l.images) });
-  };
-
-  const onPickImages = async (e) => {
-    const files = Array.from(e.target.files || []).slice(0, 10);
-    if (!files.length) return;
-    setLoading(true);
-    const urls = [];
-    for (const f of files) {
-      const url = await uploadToS3(f);
-      if (url) urls.push(url);
+  // Create or update, then optionally submit for approval (drafts and rejected listings only).
+  const saveListing = async (body, submit) => {
+    const res = await (editing
+      ? call(`/${editing.id}`, { method: "PUT", body: JSON.stringify(body) })
+      : call("", { method: "POST", body: JSON.stringify(body) }));
+    const saved = res.listing;
+    if (submit && saved && ["draft", "rejected"].includes(saved.status)) {
+      await call(`/${saved.id}/submit`, { method: "POST" });
     }
-    setLoading(false);
-    if (urls.length < files.length) alert("Some photos could not be uploaded.");
-    set("images", [...form.images, ...urls].slice(0, 20));
-    e.target.value = "";
-  };
-
-  const save = async () => {
-    const body = {
-      ...form,
-      base_price: Number(form.base_price),
-      weekend_price: form.weekend_price === "" ? null : Number(form.weekend_price),
-      cleaning_fee: Number(form.cleaning_fee || 0),
-      capacity: Number(form.capacity),
-      bedrooms: form.bedrooms === "" ? null : Number(form.bedrooms),
-      deposit_percent: Number(form.deposit_percent),
-      min_nights: Number(form.min_nights),
-      max_nights: Number(form.max_nights),
-    };
-    ["id", "owner_id", "owner_role", "status", "reject_reason", "created_at", "updated_at", "slug", "commission_percent", "gst_percent"].forEach((k) => delete body[k]);
-    setSaving(true);
-    try {
-      await (editingId ? call(`/${editingId}`, { method: "PUT", body: JSON.stringify(body) }) : call("", { method: "POST", body: JSON.stringify(body) }));
-      setForm(null);
-      setEditingId(null);
-      load();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSaving(false);
-    }
+    setFormOpen(false);
+    setEditing(null);
+    load();
   };
 
   const action = async (l, a) => {
@@ -161,83 +109,16 @@ export default function Venues() {
   };
 
   // ── form view ──
-  if (form) {
+  if (formOpen) {
     return (
-      <div className="p-4 md:p-6 max-w-3xl mx-auto">
-        <button className="text-sm text-gray-600 mb-3" onClick={() => { setForm(null); setEditingId(null); }}>← Back</button>
-        <h1 className="text-xl font-semibold mb-4">{editingId ? "Edit venue" : "Add a venue"}</h1>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Title *"><input className={inputCls} value={form.title} onChange={(e) => set("title", e.target.value)} /></Field>
-          <Field label="Type *">
-            <select className={inputCls} value={form.type} onChange={(e) => set("type", e.target.value)}>
-              {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </Field>
-          <Field label="Pricing *">
-            <select className={inputCls} value={form.price_model} onChange={(e) => set("price_model", e.target.value)}>
-              <option value="night">Per night (stays)</option>
-              <option value="slot">Per day / slot (halls, lawns)</option>
-            </select>
-          </Field>
-          <Field label="Base price (₹) *"><input type="number" className={inputCls} value={form.base_price} onChange={(e) => set("base_price", e.target.value)} /></Field>
-          <Field label="Weekend price (₹, Fri/Sat)"><input type="number" className={inputCls} value={form.weekend_price} onChange={(e) => set("weekend_price", e.target.value)} /></Field>
-          <Field label="Cleaning fee (₹)"><input type="number" className={inputCls} value={form.cleaning_fee} onChange={(e) => set("cleaning_fee", e.target.value)} /></Field>
-          <Field label="Max guests *"><input type="number" className={inputCls} value={form.capacity} onChange={(e) => set("capacity", e.target.value)} /></Field>
-          <Field label="Bedrooms"><input type="number" className={inputCls} value={form.bedrooms} onChange={(e) => set("bedrooms", e.target.value)} /></Field>
-          <Field label="City *"><input className={inputCls} value={form.city} onChange={(e) => set("city", e.target.value)} /></Field>
-          <Field label="State"><input className={inputCls} value={form.state || ""} onChange={(e) => set("state", e.target.value)} /></Field>
-          <div className="md:col-span-2"><Field label="Address"><input className={inputCls} value={form.address || ""} onChange={(e) => set("address", e.target.value)} /></Field></div>
-          <Field label="Pay now at booking (% of total)"><input type="number" min={10} max={100} className={inputCls} value={form.deposit_percent} onChange={(e) => set("deposit_percent", e.target.value)} /></Field>
-          <Field label="Cancellation policy">
-            <select className={inputCls} value={form.cancellation_policy} onChange={(e) => set("cancellation_policy", e.target.value)}>
-              <option value="flexible">Flexible: full refund until 2 days before</option>
-              <option value="moderate">Moderate: full refund until 7 days before</option>
-              <option value="strict">Strict: 50% until 14 days before</option>
-            </select>
-          </Field>
-          {form.price_model === "night" && (
-            <>
-              <Field label="Minimum nights"><input type="number" className={inputCls} value={form.min_nights} onChange={(e) => set("min_nights", e.target.value)} /></Field>
-              <Field label="Maximum nights"><input type="number" className={inputCls} value={form.max_nights} onChange={(e) => set("max_nights", e.target.value)} /></Field>
-            </>
-          )}
-          <div className="md:col-span-2"><Field label="Description"><textarea rows={4} className={inputCls} value={form.description || ""} onChange={(e) => set("description", e.target.value)} /></Field></div>
-          <div className="md:col-span-2"><Field label="House rules"><textarea rows={2} className={inputCls} value={form.rules || ""} onChange={(e) => set("rules", e.target.value)} /></Field></div>
-        </div>
-
-        <div className="mt-4">
-          <span className="block text-sm font-semibold mb-2">Amenities</span>
-          <div className="flex flex-wrap gap-2">
-            {AMENITIES.map((a) => {
-              const on = form.amenities.includes(a);
-              return (
-                <button key={a} type="button" onClick={() => set("amenities", on ? form.amenities.filter((x) => x !== a) : [...form.amenities, a])}
-                  className={`px-3 py-1 rounded-full text-sm border ${on ? "bg-[#5323DC] text-white border-[#5323DC]" : "bg-white"}`}>{a}</button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <span className="block text-sm font-semibold mb-2">Photos (at least 1 to submit)</span>
-          <div className="flex flex-wrap gap-3">
-            {form.images.map((u) => (
-              <div key={u} className="relative">
-                <img src={u} alt="" className="h-24 w-32 object-cover rounded-lg border" />
-                <button type="button" onClick={() => set("images", form.images.filter((x) => x !== u))} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 text-xs">×</button>
-              </div>
-            ))}
-            <label className="h-24 w-32 flex items-center justify-center border-2 border-dashed rounded-lg text-sm text-gray-500 cursor-pointer">
-              + Add
-              <input type="file" accept="image/*" multiple className="hidden" onChange={onPickImages} />
-            </label>
-          </div>
-        </div>
-
-        <button disabled={saving} onClick={save} style={{ background: GRADIENT }} className="mt-6 px-6 py-3 rounded-xl text-white font-semibold disabled:opacity-60">
-          {saving ? "Saving…" : "Save venue"}
-        </button>
-      </div>
+      <VenueForm
+        key={editing?.id || "new"}
+        initial={editing}
+        editing={!!editing}
+        setBusy={setLoading}
+        onCancel={() => { setFormOpen(false); setEditing(null); }}
+        onSave={saveListing}
+      />
     );
   }
 
@@ -253,7 +134,7 @@ export default function Venues() {
             </button>
           ))}
           {tab === "listings" && (
-            <button onClick={() => { setEditingId(null); setForm({ ...EMPTY }); }} className="px-4 py-2 rounded-lg text-sm font-medium bg-black text-white">+ Add venue</button>
+            <button onClick={openNew} className="px-4 py-2 rounded-lg text-sm font-medium bg-black text-white">+ Add venue</button>
           )}
         </div>
       </div>
@@ -271,7 +152,7 @@ export default function Venues() {
                     <h3 className="font-semibold">{l.title}</h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${STATUS[l.status]}`}>{l.status}</span>
                   </div>
-                  <p className="text-sm text-gray-500 capitalize">{l.type} · {l.city} · up to {l.capacity} guests</p>
+                  <p className="text-sm text-gray-500 capitalize">{l.type === "other" && l.custom_type ? l.custom_type : l.type} · {l.city} · up to {l.capacity} guests</p>
                   <p className="text-sm mt-1">{rupees(l.base_price)} / {l.price_model === "night" ? "night" : "slot"}</p>
                   {l.reject_reason && <p className="text-xs text-red-600 mt-1">Rejected: {l.reject_reason}</p>}
                   <div className="flex flex-wrap gap-2 mt-3 text-sm">
