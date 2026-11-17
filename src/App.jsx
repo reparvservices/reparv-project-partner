@@ -20,6 +20,7 @@ import ScrollToTop from "./utils/ScrollToTop";
 
 const PropertiesFlatAndPlotInfo = lazy(() => import("./pages/properties/PropertiesFlatAndPlotInfo"));
 const Tickets = lazy(() => import("./pages/tickets/Tickets"));
+const Venues = lazy(() => import("./pages/venues/Venues"));
 const AddTicket = lazy(() => import("./pages/tickets/AddTicket"));
 const EditProfile = lazy(() => import("./pages/profile/EditProfile"));
 const Refer = lazy(() => import("./pages/refer/Refer"));
@@ -250,6 +251,7 @@ const App = () => (
 
           {/* Tickets */}
           <Route path="tickets" element={<Tickets />} />
+          <Route path="venues" element={<Venues />} />
           <Route path="tickets/add" element={<AddTicket />} />
           <Route path="tickets/update/:id" element={<AddTicket />} />
 

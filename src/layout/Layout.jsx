@@ -14,7 +14,7 @@ import { HiUsers } from "react-icons/hi2";
 import { PiBuildingsFill } from "react-icons/pi";
 import { FaUserTie, FaHandshake, FaTicket } from "react-icons/fa6";
 import { BiSolidDiamond } from "react-icons/bi";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle, FaHome } from "react-icons/fa";
 import { IoMdMenu } from "react-icons/io";
 import { FaPlus } from "react-icons/fa";
 import { AiFillHome } from "react-icons/ai";
@@ -85,6 +85,12 @@ export default function Layout() {
       to: "/app/tickets",
       icon: <FaTicket size={18} />,
       hide: false,
+    },
+    {
+      label: "Venues & Stays",
+      to: "/app/venues",
+      icon: <FaHome size={18} />,
+      hide: user?.role !== "Project Partner",
     },
   ];
 
