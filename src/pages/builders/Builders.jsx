@@ -6,6 +6,7 @@ import BuildersHeader from "../../components/builders/BuildersHeader";
 import LiveActivitySection from "../../components/builders/LiveActivitySection";
 import NetworkSection from "../../components/builders/NetworkSection";
 import { ViewBuilderModal } from "../../components/builders/BuilderModals";
+import { confirmDialog } from "../../components/ui/Dialogs.jsx";
 
 /* ── Static live-activity feed ── */
 const LIVE_ACTIVITY = [
@@ -87,7 +88,7 @@ export default function Builders() {
 
   /* ── delete ── */
   const del = async (builderid) => {
-    if (!window.confirm("Delete this builder?")) return;
+    if (!(await confirmDialog("Delete this builder?"))) return;
     try {
       const r = await fetch(`${URI}/project-partner/builders/delete/${builderid}`, {
         method: "DELETE", credentials: "include", headers: { "Content-Type": "application/json" },
@@ -99,7 +100,7 @@ export default function Builders() {
 
   /* ── status toggle ── */
   const statusToggle = async (builderid) => {
-    if (!window.confirm("Change status?")) return;
+    if (!(await confirmDialog("Change status?"))) return;
     try {
       const r = await fetch(`${URI}/project-partner/builders/status/${builderid}`, {
         method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" },

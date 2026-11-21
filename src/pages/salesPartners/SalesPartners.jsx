@@ -1,311 +1,398 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { parse } from "date-fns";
+import { FiSearch, FiPlus, FiEdit2, FiKey, FiPower, FiTrash2, FiDownload, FiRefreshCw, FiEye, FiEyeOff, FiX } from "react-icons/fi";
+import { FaHandshake } from "react-icons/fa";
 import { useAuth } from "../../store/auth";
-import FiltersBar from "../../components/salesPartners/FiltersBar";
-import PartnersTable from "../../components/salesPartners/PartnersTable";
-import SalesPartnersHeader from "../../components/salesPartners/SalesPartnersHeader";
-import StatsCards from "../../components/salesPartners/StatsCards";
-import {
-  AddEditModal, PaymentModal, FollowUpModal,
-  AssignLoginModal, ViewPartnerModal,
-  FOLLOWUP_COLOR,
-} from "../../components/salesPartners/SalesPartnersModals";
+import { getImageURI } from "../../utils/helper";
+import { confirmDialog } from "../../components/ui/Dialogs.jsx";
 
-const EMPTY_SP = { fullname: "", contact: "", email: "", state: "", city: "", intrest: "" };
+const STATUS_FILTERS = ["All", "Active", "Inactive"];
 
-export default function SalesPartners() {
-  const navigate = useNavigate();
-  const {
-    URI, setLoading,
-    giveAccess, setGiveAccess,
-    showPaymentIdForm, setShowPaymentIdForm,
-    showSalesPerson, setShowSalesPerson,
-    showFollowUpList, setShowFollowUpList,
-    partnerPaymentStatus,
-  } = useAuth();
+const initials = (name = "") =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("") || "SP";
 
-  /* ── data ── */
-  const [datas, setDatas]         = useState([]);
-  const [states, setStates]       = useState([]);
-  const [cities, setCities]       = useState([]);   // filter cities
-  const [formCities, setFormCities] = useState([]); // form cities
+// "21 Nov 2026 | 04:39 PM" → "21 Nov 2026"
+const dateOnly = (value) => String(value || "").split("|")[0].trim() || "—";
 
-  /* ── filters ── */
-  const [searchTerm, setSearchTerm]       = useState("");
-  const [paymentFilter, setPaymentFilter] = useState("");
-  const [followupFilter, setFollowupFilter] = useState("");
-  const [stateFilter, setStateFilter]     = useState("");
-  const [cityFilter, setCityFilter]       = useState("");
-  const [range, setRange] = useState([{ startDate: null, endDate: null, key: "selection" }]);
+function StatCard({ label, value, hint, tone = "text-gray-900" }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+      <p className="text-xs font-medium text-gray-500">{label}</p>
+      <p className={`mt-1 text-2xl font-bold tabular-nums ${tone}`}>{value}</p>
+      {hint && <p className="mt-0.5 text-[11px] text-gray-400">{hint}</p>}
+    </div>
+  );
+}
 
-  /* ── form state ── */
-  const [showSalesForm, setShowSalesForm]   = useState(false);
-  const [newSalesPerson, setNewSalesPerson] = useState(EMPTY_SP);
-  const [salesPersonId, setSalesPersonId]   = useState(null);
-  const [partner, setPartner]               = useState({});
-  const [payment, setPayment]               = useState({ amount: "", paymentid: "" });
-  const [username, setUsername]             = useState("");
-  const [password, setPassword]             = useState("");
-  const [followUp, setFollowUp]             = useState("");
-  const [followUpText, setFollowUpText]     = useState("");
-  const [followUpList, setFollowUpList]     = useState([]);
+/** Set the username and password a sales partner signs in with */
+function SignInModal({ partner, onClose, onSave }) {
+  const [username, setUsername] = useState(partner.username || "");
+  const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  /* ── API ── */
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const r = await fetch(`${URI}/project-partner/sales`, { method: "GET", credentials: "include", headers: { "Content-Type": "application/json" } });
-      if (!r.ok) throw new Error(); setDatas(await r.json());
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+  const generate = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    const bytes = crypto.getRandomValues(new Uint32Array(10));
+    setPassword(Array.from(bytes, (b) => chars[b % chars.length]).join(""));
+    setShow(true);
   };
 
-  const fetchStates = async () => {
-    try {
-      const r = await fetch(`${URI}/admin/states`, { method: "GET", credentials: "include", headers: { "Content-Type": "application/json" } });
-      if (r.ok) setStates(await r.json());
-    } catch (e) { console.error(e); }
-  };
-
-  const fetchCitiesFor = async (state, setter) => {
-    if (!state) { setter([]); return; }
-    try {
-      const r = await fetch(`${URI}/admin/cities/${state}`, { method: "GET", credentials: "include", headers: { "Content-Type": "application/json" } });
-      if (r.ok) setter(await r.json());
-    } catch (e) { console.error(e); }
-  };
-
-  useEffect(() => { fetchData(); fetchStates(); }, []);
-  useEffect(() => { fetchCitiesFor(stateFilter, setCities); setCityFilter(""); }, [stateFilter]);
-  useEffect(() => { fetchCitiesFor(newSalesPerson.state, setFormCities); }, [newSalesPerson.state]);
-
-  /* ── CRUD ── */
-  const add = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    const ep = newSalesPerson.salespersonsid ? `edit/${newSalesPerson.salespersonsid}` : "add";
+    setError("");
+    if (!username.trim() && !password) return setError("Enter a username, a password, or both.");
+    if (password && password.length < 8) return setError("Password must be at least 8 characters.");
+    setSaving(true);
     try {
-      setLoading(true);
-      const r = await fetch(`${URI}/project-partner/sales/${ep}`, {
-        method: newSalesPerson.salespersonsid ? "PUT" : "POST",
-        credentials: "include", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newSalesPerson),
-      });
-      if (r.status === 409) { alert("Sales Person already exists!"); return; }
-      if (!r.ok) throw new Error();
-      alert(newSalesPerson.salespersonsid ? "Updated!" : "Added!");
-      setNewSalesPerson(EMPTY_SP); setShowSalesForm(false); await fetchData();
-    } catch (e) { console.error(e); } finally { setLoading(false); }
-  };
-
-  const edit = async (id) => {
-    try {
-      const r = await fetch(`${URI}/admin/salespersons/get/${id}`, { method: "GET", credentials: "include", headers: { "Content-Type": "application/json" } });
-      if (!r.ok) throw new Error();
-      setNewSalesPerson(await r.json()); setShowSalesForm(true);
-    } catch (e) { console.error(e); }
-  };
-
-  const viewSalesPerson = async (id) => {
-    try {
-      const r = await fetch(`${URI}/admin/salespersons/get/${id}`, { method: "GET", credentials: "include", headers: { "Content-Type": "application/json" } });
-      if (!r.ok) throw new Error();
-      setPartner(await r.json()); setShowSalesPerson(true);
-    } catch (e) { console.error(e); }
-  };
-
-  const del = async (id) => {
-    if (!window.confirm("Delete this Sales Person?")) return;
-    try {
-      const r = await fetch(`${URI}/admin/salespersons/delete/${id}`, { method: "DELETE", credentials: "include" });
-      const d = await r.json();
-      r.ok ? (alert("Deleted!"), fetchData()) : alert(`Error: ${d.message}`);
-    } catch (e) { console.error(e); } finally { setLoading(false); }
-  };
-
-  const statusToggle = async (id) => {
-    if (!window.confirm("Change status?")) return;
-    try {
-      const r = await fetch(`${URI}/admin/salespersons/status/${id}`, { method: "PUT", credentials: "include" });
-      const d = await r.json();
-      alert(r.ok ? `Success: ${d.message}` : `Error: ${d.message}`); fetchData();
-    } catch (e) { console.error(e); }
-  };
-
-  const updatePaymentId = async (e) => {
-    e.preventDefault(); setLoading(true);
-    try {
-      const r = await fetch(`${URI}/admin/salespersons/update/paymentid/${salesPersonId}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify(payment),
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.message);
-      alert(`Success: ${d.message}`); setSalesPersonId(null); setShowPaymentIdForm(false); fetchData();
-    } catch (e) { console.error(e); alert(`Error: ${e.message}`); } finally { setLoading(false); }
-  };
-
-  const fetchFollowUpList = async (id) => {
-    try {
-      const r = await fetch(`${URI}/admin/salespersons/followup/list/${id}`, { method: "GET", credentials: "include", headers: { "Content-Type": "application/json" } });
-      if (!r.ok) throw new Error(); setFollowUpList(await r.json());
-    } catch (e) { console.error(e); }
-  };
-
-  const addFollowUp = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const r = await fetch(`${URI}/admin/salespersons/followup/add/${salesPersonId}`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ followUp, followUpText }),
-      });
-      const d = await r.json();
-      r.ok ? (alert(`Success: ${d.message}`), await fetchData(), fetchFollowUpList(salesPersonId)) : alert(`Error: ${d.message}`);
-      setFollowUp(""); setFollowUpText("");
-    } catch (e) { console.error(e); } finally { setLoading(false); }
-  };
-
-  const assignLogin = async (e) => {
-    e.preventDefault();
-    if (!window.confirm("Assign login to this Sales Person?")) return;
-    try {
-      setLoading(true);
-      const r = await fetch(`${URI}/admin/salespersons/assignlogin/${salesPersonId}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ salesPersonId, username, password }),
-      });
-      const d = await r.json();
-      alert(r.ok ? `Success: ${d.message}` : `Error: ${d.message}`);
-      setSalesPersonId(null); setUsername(""); setPassword(""); setGiveAccess(false); fetchData();
-    } catch (e) { console.error(e); } finally { setLoading(false); }
-  };
-
-  /* ── table action handler ── */
-  const handleAction = (action, row) => {
-    const id = row.salespersonsid;
-    switch (action) {
-      case "view":        viewSalesPerson(id); break;
-      case "edit":        edit(id); break;
-      case "status":      statusToggle(id); break;
-      case "payment":     setSalesPersonId(id); setShowPaymentIdForm(true); break;
-      case "followup":    setSalesPersonId(id); fetchFollowUpList(id); setShowFollowUpList(true); break;
-      case "assignlogin": setSalesPersonId(id); setGiveAccess(true); break;
-      case "delete":      del(id); break;
+      await onSave({ username: username.trim(), password });
+    } catch (err) {
+      setError(err.message);
+      setSaving(false);
     }
   };
 
-  /* ── payment status helper ── */
-  const getPaymentStatus = (item) => {
-    if (item.paymentstatus === "Success" || item.paymentstatus === "Paid") return "Paid";
-    if (item.paymentstatus === "Follow Up" && item.loginstatus === "Inactive") return "Follow Up";
-    if (item.paymentstatus === "Pending") return "Unpaid";
-    if (item.paymentstatus !== "Success" && item.loginstatus === "Active") return "Free";
-    return "";
-  };
-
-  /* ── filtered data ── */
-  const filteredData = datas.filter((item) => {
-    const s = searchTerm.toLowerCase();
-    const matchSearch = !s ||
-      item.fullname?.toLowerCase().includes(s) ||
-      item.contact?.toLowerCase().includes(s) ||
-      item.state?.toLowerCase().includes(s) ||
-      item.city?.toLowerCase().includes(s);
-
-    let startDate = range[0].startDate ? new Date(new Date(range[0].startDate).setHours(0,0,0,0)) : null;
-    let endDate   = range[0].endDate   ? new Date(new Date(range[0].endDate).setHours(23,59,59,999)) : null;
-    const itemDate  = parse(item.created_at || "", "dd MMM yyyy | hh:mm a", new Date());
-    const matchDate = (!startDate && !endDate) || (startDate && endDate && itemDate >= startDate && itemDate <= endDate);
-
-    const ps = getPaymentStatus(item);
-    return (
-      matchSearch && matchDate &&
-      (!paymentFilter  || ps === paymentFilter) &&
-      (!followupFilter || item.followUp === followupFilter) &&
-      (!stateFilter    || item.state    === stateFilter) &&
-      (!cityFilter     || item.city     === cityFilter) &&
-      (!partnerPaymentStatus || ps === partnerPaymentStatus)
-    );
-  });
-
-  const clearFilters = () => {
-    setSearchTerm(""); setPaymentFilter(""); setFollowupFilter("");
-    setStateFilter(""); setCityFilter("");
-    setRange([{ startDate: null, endDate: null, key: "selection" }]);
-  };
-
-  /* ── live stats ── */
-  const total   = datas.length;
-  const active  = datas.filter(d => d.loginstatus === "Active").length;
-  const paid    = datas.filter(d => d.paymentstatus === "Success" || d.paymentstatus === "Paid").length;
-  const pending = datas.filter(d => d.paymentstatus === "Pending").length;
-
-  const liveStats = [
-    { label: "Total Partners",   value: total,   sub: "+12%",  subSuffix: " from last month", subGreen: true },
-    { label: "Active Partners",  value: active,  sub: `${total ? Math.round((active/total)*100) : 0}% engaged`, subSuffix: "", subGreen: "violet" },
-    { label: "Paid Partners",    value: paid,    sub: "+5%",   subSuffix: " conversion",      subGreen: true },
-    { label: "Pending Payments", value: pending, sub: `${pending} invoices pending`, subSuffix: "", subGreen: false },
-    { label: "Leads Converted",  value: active,  sub: "+24%",  subSuffix: " vs average",      subGreen: true },
-  ];
+  const inputCls =
+    "mt-1 h-11 w-full rounded-full border border-gray-200 bg-white px-4 text-sm text-gray-800 outline-none transition focus:border-[#6C35DE] focus:ring-4 focus:ring-[#6C35DE]/15";
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <form onSubmit={submit} onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Sign-in details</h3>
+            <p className="mt-0.5 text-sm text-gray-500">{partner.fullname} signs in to the partner panel with these.</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 cursor-pointer" aria-label="Close">
+            <FiX size={18} />
+          </button>
+        </div>
 
-      <SalesPartnersHeader
-        searchTerm={searchTerm}
-        onSearch={setSearchTerm}
-        onAdd={() => { setNewSalesPerson(EMPTY_SP); setShowSalesForm(true); }}
-        range={range}
-        setRange={setRange}
-      />
+        <div className="mt-5 space-y-4">
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Username</label>
+            <input className={inputCls} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. rahul.sharma" autoFocus />
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">New password</label>
+              <button type="button" onClick={generate} className="text-xs font-semibold text-[#5323DC] hover:underline cursor-pointer">Generate</button>
+            </div>
+            <div className="relative">
+              <input
+                className={`${inputCls} pr-11`}
+                type={show ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Leave blank to keep the current password"
+                autoComplete="new-password"
+              />
+              <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#5323DC] cursor-pointer" aria-label={show ? "Hide password" : "Show password"}>
+                {show ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+              </button>
+            </div>
+            <p className="mt-1 text-[11px] text-gray-400">At least 8 characters. Share it with them yourself: it can&apos;t be viewed again.</p>
+          </div>
+        </div>
 
-      <div className="flex-1 px-5 md:px-8 py-7 space-y-6">
-        <StatsCards stats={liveStats} />
+        {error && <p className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</p>}
 
-        <FiltersBar
-          paymentFilter={paymentFilter}   setPaymentFilter={setPaymentFilter}
-          followupFilter={followupFilter} setFollowupFilter={setFollowupFilter}
-          stateFilter={stateFilter}       setStateFilter={setStateFilter}
-          cityFilter={cityFilter}         setCityFilter={setCityFilter}
-          states={states} cities={cities}
-          onClear={clearFilters}
-        />
+        <div className="mt-6 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="rounded-full px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 cursor-pointer">Cancel</button>
+          <button type="submit" disabled={saving} className="rounded-full bg-[#5323DC] px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#6C35DE]/25 hover:brightness-110 disabled:opacity-60 cursor-pointer">
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
 
-        <PartnersTable
-          data={filteredData}
-          onAction={handleAction}
-          getPaymentStatus={getPaymentStatus}
-          followUpColorMap={FOLLOWUP_COLOR}
-          onFollowUpClick={(row) => { setSalesPersonId(row.salespersonsid); fetchFollowUpList(row.salespersonsid); setShowFollowUpList(true); }}
-          onAssignLoginClick={(row) => { setSalesPersonId(row.salespersonsid); setGiveAccess(true); }}
-        />
+export default function SalesPartners() {
+  const navigate = useNavigate();
+  const { URI } = useAuth();
+
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [signInFor, setSignInFor] = useState(null);
+  const [busyId, setBusyId] = useState(null);
+
+  const call = useCallback(
+    async (path = "", options = {}) => {
+      const res = await fetch(`${URI}/project-partner/sales${path}`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
+      return data;
+    },
+    [URI],
+  );
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await call("");
+      setPartners(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message || "Could not load your sales partners.");
+    } finally {
+      setLoading(false);
+    }
+  }, [call]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const stats = useMemo(() => {
+    const active = partners.filter((p) => p.status === "Active").length;
+    return {
+      total: partners.length,
+      active,
+      inactive: partners.length - active,
+      enquiries: partners.reduce((n, p) => n + (Number(p.enquiryCount) || 0), 0),
+      deals: partners.reduce((n, p) => n + (Number(p.dealCount) || 0), 0),
+    };
+  }, [partners]);
+
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return partners.filter((p) => {
+      if (statusFilter !== "All" && p.status !== statusFilter) return false;
+      if (!q) return true;
+      return [p.fullname, p.contact, p.email, p.city, p.state, p.username].some((v) => String(v || "").toLowerCase().includes(q));
+    });
+  }, [partners, query, statusFilter]);
+
+  const run = async (id, fn) => {
+    setBusyId(id);
+    try {
+      await fn();
+      await load();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const toggleStatus = async (p) => {
+    const next = p.status === "Active" ? "deactivate" : "activate";
+    const extra = p.status === "Active" ? " They won't be able to sign in until you activate them again." : "";
+    if (!(await confirmDialog(`${next[0].toUpperCase() + next.slice(1)} ${p.fullname}?${extra}`))) return;
+    run(p.salespersonsid, () => call(`/status/${p.salespersonsid}`, { method: "PUT" }));
+  };
+
+  const remove = async (p) => {
+    if (!(await confirmDialog(`Delete ${p.fullname}? This can't be undone.`))) return;
+    run(p.salespersonsid, () => call(`/delete/${p.salespersonsid}`, { method: "DELETE" }));
+  };
+
+  const saveSignIn = async (values) => {
+    await call(`/credentials/${signInFor.salespersonsid}`, {
+      method: "PUT",
+      body: JSON.stringify({ username: values.username || undefined, password: values.password || undefined }),
+    });
+    setSignInFor(null);
+    alert("Sign-in details updated.");
+    load();
+  };
+
+  const exportCsv = () => {
+    const header = ["Name", "Contact", "Email", "City", "State", "Username", "Status", "Enquiries", "Deals", "Joined"];
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = rows.map((p) => [p.fullname, p.contact, p.email, p.city, p.state, p.username, p.status, p.enquiryCount, p.dealCount, dateOnly(p.created_at)].map(esc).join(","));
+    const blob = new Blob([[header.join(","), ...lines].join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "sales-partners.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const iconBtn = "flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:border-[#6C35DE]/40 hover:text-[#5E23DC] disabled:opacity-50 cursor-pointer";
+
+  return (
+    <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8">
+      {/* Header */}
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Sales Partners</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Your own sales team. You create their sign-in, assign them enquiries, and track their deals.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative">
+            <FiSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name, phone, city, username"
+              className="h-11 w-full rounded-full border border-gray-200 bg-white pl-11 pr-5 text-sm text-gray-800 outline-none transition focus:border-[#6C35DE] focus:ring-4 focus:ring-[#6C35DE]/15 sm:w-72"
+            />
+          </div>
+          <button type="button" onClick={exportCsv} disabled={!rows.length} className="flex h-11 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:border-[#6C35DE]/40 disabled:opacity-50 cursor-pointer">
+            <FiDownload size={15} /> Export
+          </button>
+          <button type="button" onClick={() => navigate("/app/sales-partner/add")} className="flex h-11 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#5E23DC] to-[#7c3aed] px-5 text-sm font-semibold text-white shadow-md shadow-[#6C35DE]/25 transition hover:brightness-110 cursor-pointer">
+            <FiPlus size={16} /> Add partner
+          </button>
+        </div>
       </div>
 
-      {/* ── Modals ── */}
-      <AddEditModal
-        show={showSalesForm} onClose={() => setShowSalesForm(false)} onSubmit={add}
-        newSalesPerson={newSalesPerson} setNewSalesPerson={setNewSalesPerson}
-        states={states} formCities={formCities}
-      />
-      <PaymentModal
-        show={showPaymentIdForm} onClose={() => setShowPaymentIdForm(false)} onSubmit={updatePaymentId}
-        payment={payment} setPayment={setPayment}
-      />
-      <FollowUpModal
-        show={showFollowUpList} onClose={() => setShowFollowUpList(false)} onSubmit={addFollowUp}
-        followUp={followUp} setFollowUp={setFollowUp}
-        followUpText={followUpText} setFollowUpText={setFollowUpText}
-        followUpList={followUpList}
-      />
-      <AssignLoginModal
-        show={giveAccess} onClose={() => setGiveAccess(false)} onSubmit={assignLogin}
-        username={username} setUsername={setUsername}
-        password={password} setPassword={setPassword}
-      />
-      <ViewPartnerModal
-        show={showSalesPerson} onClose={() => setShowSalesPerson(false)}
-        partner={partner} URI={URI}
-      />
+      {/* Stats */}
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <StatCard label="Total partners" value={stats.total} />
+        <StatCard label="Active" value={stats.active} tone="text-emerald-600" hint="Can sign in" />
+        <StatCard label="Inactive" value={stats.inactive} tone={stats.inactive ? "text-amber-600" : "text-gray-900"} hint="Sign-in blocked" />
+        <StatCard label="Enquiries assigned" value={stats.enquiries} />
+        <StatCard label="Deals closed" value={stats.deals} tone="text-[#5323DC]" />
+      </div>
+
+      {/* Status filter */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {STATUS_FILTERS.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setStatusFilter(s)}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition cursor-pointer ${
+              statusFilter === s ? "bg-[#5E23DC] text-white shadow-md shadow-[#6C35DE]/20" : "border border-gray-200 bg-white text-gray-600 hover:border-[#6C35DE]/40 hover:text-[#5E23DC]"
+            }`}
+          >
+            {s}
+          </button>
+        ))}
+        <button type="button" onClick={load} className="ml-auto flex items-center gap-2 rounded-full px-3 py-1.5 text-xs text-gray-500 hover:text-[#5E23DC] cursor-pointer">
+          <FiRefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-100 text-sm">
+            <thead className="bg-[#FAF9FF] text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <tr>
+                <th className="px-5 py-3">Partner</th>
+                <th className="px-5 py-3">Contact</th>
+                <th className="px-5 py-3">Location</th>
+                <th className="px-5 py-3">Sign-in</th>
+                <th className="px-5 py-3 text-right">Enquiries</th>
+                <th className="px-5 py-3 text-right">Deals</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Joined</th>
+                <th className="px-5 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading && (
+                <tr><td colSpan={9} className="px-5 py-14 text-center text-gray-400">Loading sales partners…</td></tr>
+              )}
+
+              {!loading && error && (
+                <tr>
+                  <td colSpan={9} className="px-5 py-14 text-center">
+                    <p className="text-red-600">{error}</p>
+                    <button onClick={load} className="mt-3 text-sm font-semibold text-[#5E23DC] hover:underline cursor-pointer">Try again</button>
+                  </td>
+                </tr>
+              )}
+
+              {!loading && !error && partners.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="px-5 py-16 text-center">
+                    <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#F3EDFF] text-[#5323DC]"><FaHandshake size={22} /></span>
+                    <p className="font-semibold text-gray-900">No sales partners yet</p>
+                    <p className="mx-auto mt-1 max-w-sm text-xs text-gray-500">
+                      Add a partner and set their username and password. They sign in on the partner panel under &quot;Sales Partner&quot;, and you can assign them enquiries.
+                    </p>
+                    <button onClick={() => navigate("/app/sales-partner/add")} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#5323DC] px-5 py-2.5 text-sm font-semibold text-white hover:brightness-110 cursor-pointer">
+                      <FiPlus size={15} /> Add your first partner
+                    </button>
+                  </td>
+                </tr>
+              )}
+
+              {!loading && !error && partners.length > 0 && rows.length === 0 && (
+                <tr><td colSpan={9} className="px-5 py-14 text-center text-gray-400">No partners match this search.</td></tr>
+              )}
+
+              {!loading &&
+                !error &&
+                rows.map((p) => {
+                  const active = p.status === "Active";
+                  const busy = busyId === p.salespersonsid;
+                  return (
+                    <tr key={p.salespersonsid} className="hover:bg-[#F6F3FF]">
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-3">
+                          {p.userimage ? (
+                            <img src={getImageURI(p.userimage)} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover bg-gray-100" />
+                          ) : (
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F3EDFF] text-xs font-bold text-[#5323DC]">{initials(p.fullname)}</span>
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-gray-900">{p.fullname}</p>
+                            <p className="truncate text-xs text-gray-500">{p.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-gray-700">{p.contact || "—"}</td>
+                      <td className="px-5 py-3 text-gray-700">{[p.city, p.state].filter(Boolean).join(", ") || "—"}</td>
+                      <td className="px-5 py-3">
+                        {p.username ? (
+                          <span className="font-mono text-xs text-gray-700">{p.username}</span>
+                        ) : (
+                          <button type="button" onClick={() => setSignInFor(p)} className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200 hover:bg-amber-100 cursor-pointer">
+                            Set sign-in
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-right tabular-nums text-gray-700">{p.enquiryCount ?? 0}</td>
+                      <td className="px-5 py-3 text-right tabular-nums text-gray-700">{p.dealCount ?? 0}</td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${active ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-gray-100 text-gray-600 ring-gray-200"}`}>
+                          {active ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-gray-600">{dateOnly(p.created_at)}</td>
+                      <td className="px-5 py-3">
+                        <div className="flex justify-end gap-2">
+                          <button type="button" title="Edit details" className={iconBtn} onClick={() => navigate(`/app/sales-partner/update/${p.salespersonsid}`)}><FiEdit2 size={14} /></button>
+                          <button type="button" title="Sign-in details" className={iconBtn} onClick={() => setSignInFor(p)}><FiKey size={14} /></button>
+                          <button type="button" title={active ? "Deactivate" : "Activate"} className={iconBtn} disabled={busy} onClick={() => toggleStatus(p)}><FiPower size={14} /></button>
+                          <button type="button" title="Delete" className={`${iconBtn} hover:!border-red-300 hover:!text-red-600`} disabled={busy} onClick={() => remove(p)}><FiTrash2 size={14} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
+        {!loading && !error && partners.length > 0 && (
+          <p className="border-t border-gray-100 px-5 py-3 text-xs text-gray-500">
+            Showing {rows.length} of {partners.length} partner{partners.length === 1 ? "" : "s"}
+          </p>
+        )}
+      </div>
+
+      {signInFor && <SignInModal partner={signInFor} onClose={() => setSignInFor(null)} onSave={saveSignIn} />}
     </div>
   );
 }

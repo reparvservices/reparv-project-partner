@@ -23,6 +23,7 @@ const Tickets = lazy(() => import("./pages/tickets/Tickets"));
 const Venues = lazy(() => import("./pages/venues/Venues"));
 const AddTicket = lazy(() => import("./pages/tickets/AddTicket"));
 const EditProfile = lazy(() => import("./pages/profile/EditProfile"));
+const Settings = lazy(() => import("./pages/Settings"));
 const Refer = lazy(() => import("./pages/refer/Refer"));
 const ReferScreen = lazy(() => import("./pages/refer/ReferScreen"));
 
@@ -48,8 +49,11 @@ const Network = lazy(() => import("./pages/Network"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 
 // App — Properties
-const Properties = lazy(() => import("./pages/properties/Properties"));
-const AddProperty = lazy(() => import("./pages/properties/AddProperty"));
+const PropertiesTable = lazy(() => import("./pages/properties/PropertiesTable"));
+const PropertyDetailPage = lazy(() => import("./pages/properties/PropertyDetailPage"));
+const VenueDetailPage = lazy(() => import("./pages/properties/VenueDetailPage"));
+const VenueEditPage = lazy(() => import("./pages/properties/VenueEditPage"));
+const PropertyFormPage = lazy(() => import("./pages/properties/PropertyFormPage"));
 const AddPropertyMobile = lazy(
   () => import("./pages/properties/AddPropertyMobile"),
 );
@@ -65,9 +69,9 @@ const Enquiries = lazy(() => import("./pages/enquiries/Enquiries"));
 const AddEnquiry = lazy(() => import("./pages/enquiries/AddEnquiry"));
 const Customers = lazy(() => import("./pages/customers/Customers"));
 
-// App — Builders
-const Builders = lazy(() => import("./pages/builders/Builders"));
-const AddBuilder = lazy(() => import("./pages/builders/AddBuilder"));
+// App — Builders (hidden for now)
+// const Builders = lazy(() => import("./pages/builders/Builders"));
+// const AddBuilder = lazy(() => import("./pages/builders/AddBuilder"));
 
 // App — Partners
 const SalesPartners = lazy(() => import("./pages/salesPartners/SalesPartners"));
@@ -77,16 +81,17 @@ const AddSalesPartner = lazy(
 const UpdateSalesPartner = lazy(
   () => import("./pages/salesPartners/UpdateSalesPartner"),
 );
-const TerritoryPartners = lazy(
-  () => import("./pages/territoryPartners/TerritoryPartners"),
-);
-const AddTerritoryPartner = lazy(
-  () => import("./pages/territoryPartners/AddTerritoryPartner"),
-);
+// Territory Partner pages hidden for now
+// const TerritoryPartners = lazy(
+//   () => import("./pages/territoryPartners/TerritoryPartners"),
+// );
+// const AddTerritoryPartner = lazy(
+//   () => import("./pages/territoryPartners/AddTerritoryPartner"),
+// );
 
-// App — Employees
-const Employees = lazy(() => import("./pages/employees/Employees"));
-const AddEmployee = lazy(() => import("./pages/employees/AddEmployee"));
+// App — Employees (hidden for now)
+// const Employees = lazy(() => import("./pages/employees/Employees"));
+// const AddEmployee = lazy(() => import("./pages/employees/AddEmployee"));
 
 // App — Subscription
 const Subscription = lazy(() => import("./pages/subscription/Subscription"));
@@ -214,20 +219,23 @@ const App = () => (
 
           <Route element={<RequireRole allowedRoles={["Project Partner"]} />}>
             {/* Properties */}
-            <Route path="properties" element={<Properties />} />
+            <Route path="properties" element={<PropertiesTable />} />
             <Route path="properties/map-view" element={<Map />} />
-            <Route path="property/add" element={<AddProperty />} />
+            <Route path="properties/:id" element={<PropertyDetailPage />} />
+            <Route path="properties/venue/:id" element={<VenueDetailPage />} />
+            <Route path="property/venue/:id/edit" element={<VenueEditPage />} />
+            <Route path="property/add" element={<PropertyFormPage />} />
             <Route path="property/add/mobile" element={<AddPropertyMobile />} />
-            <Route path="property/update/:id" element={<UpdateProperty />} />
+            <Route path="property/update/:id" element={<PropertyFormPage />} />
             <Route
               path="property/additional-info/:propertyid"
               element={<PropertiesFlatAndPlotInfo />}
             />
 
-            {/* Builders */}
+            {/* Builders hidden for now
             <Route path="builders" element={<Builders />} />
             <Route path="builder/add" element={<AddBuilder />} />
-            <Route path="builder/update/:id" element={<AddBuilder />} />
+            <Route path="builder/update/:id" element={<AddBuilder />} /> */}
 
             {/* Sales Partners */}
             <Route path="sales-partners" element={<SalesPartners />} />
@@ -237,27 +245,31 @@ const App = () => (
               element={<UpdateSalesPartner />}
             />
 
-            {/* Territory Partners */}
+            {/* Territory Partners hidden for now
             <Route path="territory-partners" element={<TerritoryPartners />} />
             <Route
               path="territory-partner/add"
               element={<AddTerritoryPartner />}
-            />
+            /> */}
           </Route>
 
-          {/* Employees */}
+          {/* Employees hidden for now
           <Route path="employees" element={<Employees />} />
-          <Route path="employee/add" element={<AddEmployee />} />
+          <Route path="employee/add" element={<AddEmployee />} /> */}
 
           {/* Tickets */}
           <Route path="tickets" element={<Tickets />} />
-          <Route path="venues" element={<Venues />} />
+          {/* Venue Booking is a property type now: the old page opens the filtered Properties list */}
+          <Route path="venues" element={<Navigate to="/app/properties?type=Venue" replace />} />
           <Route path="tickets/add" element={<AddTicket />} />
           <Route path="tickets/update/:id" element={<AddTicket />} />
 
             {/* Profile */}
             <Route path="profile" element={<Profile />} />
             <Route path="edit-profile" element={<EditProfile />} />
+
+            {/* Settings (logout lives here) */}
+            <Route path="settings" element={<Settings />} />
 
           {/* Refer Screen */}
           <Route path="invite" element={<Refer />} />

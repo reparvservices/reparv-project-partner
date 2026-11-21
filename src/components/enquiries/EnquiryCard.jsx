@@ -122,18 +122,26 @@ function Avatar({ name, imageSrc, size = "md" }) {
 
 /* ── Shared action list content ───────────────────────────── */
 function ActionList({ row, onClose, onAction }) {
+  const { role } = useAuth();
+  const isSales = role === "Sales Partner";
+  // Sales partners work the enquiry (view, status, update); assigning, changing the property,
+  // converting and deleting stay with the project partner.
   const actions = [
     { label: "View Details", value: "view", icon: "👁️" },
     { label: "Change Status", value: "status", icon: "🔄" },
     ...(row.source !== "Onsite"
       ? [{ label: "Update", value: "update", icon: "✏️" }]
       : []),
-    ...(row.source !== "Onsite"
+    ...(!isSales && row.source !== "Onsite"
       ? [{ label: "Change Property", value: "property", icon: "🏠" }]
       : []),
-    { label: "Assign Sales", value: "assign", icon: "👤" },
-    { label: "Digital Broker", value: "todigitalbroker", icon: "🤝" },
-    { label: "Delete", value: "delete", icon: "🗑️", danger: true },
+    ...(!isSales
+      ? [
+          { label: "Assign Sales", value: "assign", icon: "👤" },
+          { label: "Digital Broker", value: "todigitalbroker", icon: "🤝" },
+          { label: "Delete", value: "delete", icon: "🗑️", danger: true },
+        ]
+      : []),
   ];
 
   return (
@@ -246,6 +254,9 @@ function MobileCard({ item, onAction, isActiveSubscription, enquiryFilter }) {
 
   const contact = isActiveSubscription ? item.contact : "XXXXXXXXXX";
   const isAssigned = item.assign && item.assign !== "No Assign";
+  // Only a project partner assigns enquiries; a sales partner works the ones assigned to them
+  const { role } = useAuth();
+  const isSales = role === "Sales Partner";
   const isDigitalBroker = enquiryFilter === "Digital Broker";
   const canAct = isActiveSubscription !== false && !isDigitalBroker;
 
@@ -337,7 +348,7 @@ function MobileCard({ item, onAction, isActiveSubscription, enquiryFilter }) {
       {/* Action footer */}
       {canAct && hasSubscription && (
         <div className="border-t border-slate-100">
-          {!isAssigned ? (
+          {!isAssigned && !isSales ? (
             <div className="px-4 py-3">
               <button
                 onClick={(e) => {
@@ -450,6 +461,9 @@ function DesktopCard({ item, onAction, isActiveSubscription, enquiryFilter }) {
 
   const contact = isActiveSubscription ? item.contact : "XXXXXXXXXX";
   const isAssigned = item.assign && item.assign !== "No Assign";
+  // Only a project partner assigns enquiries; a sales partner works the ones assigned to them
+  const { role } = useAuth();
+  const isSales = role === "Sales Partner";
   const isDigitalBroker = enquiryFilter === "Digital Broker";
   const canAct = isActiveSubscription !== false && !isDigitalBroker;
 
@@ -578,7 +592,7 @@ function DesktopCard({ item, onAction, isActiveSubscription, enquiryFilter }) {
 
             {hasSubscription && (
               <>
-                {!isAssigned ? (
+                {!isAssigned && !isSales ? (
                   <button
                     onClick={() => onAction("assign", item.enquirersid, item)}
                   >

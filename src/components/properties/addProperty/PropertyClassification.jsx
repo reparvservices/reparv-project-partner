@@ -2,6 +2,7 @@ import {
   LISTING_TYPES,
   PROPERTY_KINDS,
   SALE_CONDITIONS,
+  VENUE_KIND,
   categoriesFor,
   categoryLabel,
 } from "../../../utils/propertyListing";
@@ -32,8 +33,11 @@ export default function PropertyClassification({
   propertyCategory,
   onChange,
   bare = false,
+  allowVenue = true,
 }) {
   const current = { listingType, condition, propertyKind, propertyCategory };
+  const isVenue = propertyKind === VENUE_KIND;
+  const kinds = PROPERTY_KINDS.filter((k) => allowVenue || k.key !== VENUE_KIND);
 
   // Changing an upper level clears the category if it no longer fits
   const update = (patch) => {
@@ -54,7 +58,8 @@ export default function PropertyClassification({
 
   const body = (
     <div className="space-y-5">
-      {/* Sell / Buy / Rent */}
+      {/* Sell / Buy / Rent (not for venues: they are booked, not sold or rented) */}
+      {!isVenue && (
       <div>
         <p className="text-xs text-gray-500 font-medium mb-2">
           I want to <span className="text-red-500">*</span>
@@ -86,9 +91,10 @@ export default function PropertyClassification({
           })}
         </div>
       </div>
+      )}
 
       {/* New Launch / Resale (Sell & Buy) */}
-      {listingType !== "Rent" && (
+      {!isVenue && listingType !== "Rent" && (
         <div>
           <p className="text-xs text-gray-500 font-medium mb-2">
             {listingType === "Buy" ? "Looking for" : "Property is"}
@@ -114,7 +120,7 @@ export default function PropertyClassification({
           Property Type <span className="text-red-500">*</span>
         </p>
         <div className="flex flex-wrap gap-2">
-          {PROPERTY_KINDS.map(({ key, label }) => (
+          {kinds.map(({ key, label }) => (
             <button
               key={key}
               type="button"
@@ -127,7 +133,18 @@ export default function PropertyClassification({
         </div>
       </div>
 
+      {isVenue && (
+        <div className="rounded-xl bg-violet-50 border border-violet-100 px-4 py-3 text-sm text-violet-800">
+          <p className="font-semibold">Venue Booking</p>
+          <p className="text-xs mt-0.5 text-violet-700">
+            Villas, farmhouses, resorts, halls, banquets and lawns that customers book directly, priced
+            per night or per slot. You&apos;ll fill in the venue details next.
+          </p>
+        </div>
+      )}
+
       {/* Category grid — 2 cols on mobile, 4 cols on sm+ */}
+      {!isVenue && (
       <div>
         <p className="text-xs text-gray-500 font-medium mb-2">
           Category <span className="text-red-500">*</span>
@@ -163,6 +180,7 @@ export default function PropertyClassification({
           })}
         </div>
       </div>
+      )}
     </div>
   );
 

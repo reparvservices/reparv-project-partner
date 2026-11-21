@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { MapContainer, Marker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { FiCrosshair } from "react-icons/fi";
 import { useAuth } from "../../../store/auth";
 import SatelliteTileLayer, {
   SATELLITE_MAX_ZOOM,
@@ -32,12 +33,27 @@ const markerIcon = new L.DivIcon({
 const geocodeCache = {};
 
 /* ── Fly to coords when they change ──────────────────────── */
-function FlyToLocation({ coords }) {
+function FlyToLocation({ coords, zoom = 13 }) {
   const map = useMap();
   useEffect(() => {
-    if (coords) map.flyTo(coords, 13, { animate: true, duration: 1.2 });
-  }, [coords, map]);
+    if (coords) map.flyTo(coords, Math.max(zoom, map.getZoom()), { animate: true, duration: 1.2 });
+  }, [coords, zoom, map]);
   return null;
+}
+
+/* ── Pin code for a point (cached), shared by map clicks and "use my location" ── */
+async function reversePincode(lat, lng, URI) {
+  try {
+    const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+    if (geocodeCache[key]) return geocodeCache[key];
+    const res = await fetch(`${URI}/api/map/reverse?lat=${lat}&lon=${lng}`);
+    const data = await res.json();
+    const pin = data?.address?.postcode || "";
+    geocodeCache[key] = pin;
+    return pin;
+  } catch {
+    return "";
+  }
 }
 
 /* ── Click handler — calls parent setter directly ─────────── */
@@ -45,20 +61,7 @@ function ClickHandler({ onPick, URI }) {
   useMapEvents({
     async click(e) {
       const { lat, lng } = e.latlng;
-      try {
-        const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
-        if (geocodeCache[key]) {
-          onPick([lat, lng], geocodeCache[key]);
-          return;
-        }
-        const res  = await fetch(`${URI}/api/map/reverse?lat=${lat}&lon=${lng}`);
-        const data = await res.json();
-        const pin  = data?.address?.postcode || "";
-        geocodeCache[key] = pin;
-        onPick([lat, lng], pin);
-      } catch {
-        onPick([lat, lng], "");
-      }
+      onPick([lat, lng], await reversePincode(lat, lng, URI));
     },
   });
   return null;
@@ -131,6 +134,40 @@ export default function LocationPicker({
     onChange({ latitude: lat, longitude: lng, pincode: pin });
   };
 
+  /* Pin the device's current location */
+  const [locating, setLocating] = useState(false);
+  const [locError, setLocError] = useState("");
+  const [flyZoom, setFlyZoom] = useState(13);
+
+  const locate = () => {
+    if (!navigator.geolocation) {
+      setLocError("This browser can't share your location. Click the map to pin it instead.");
+      return;
+    }
+    setLocError("");
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords: here }) => {
+        const { latitude: lat, longitude: lng } = here;
+        const pin = await reversePincode(lat, lng, URI);
+        setFlyZoom(17);
+        handlePick([lat, lng], pin);
+        setLocating(false);
+      },
+      (err) => {
+        setLocating(false);
+        setLocError(
+          err.code === 1
+            ? "Location permission was blocked. Allow it for this site in your browser, or click the map to pin the spot."
+            : err.code === 3
+              ? "Finding your location took too long. Try again, or click the map to pin the spot."
+              : "Couldn't find your location. Click the map to pin the spot instead.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  };
+
   const pinned = coords
     ? { lat: coords[0].toFixed(5), lng: coords[1].toFixed(5) }
     : null;
@@ -155,14 +192,29 @@ export default function LocationPicker({
         >
           <SatelliteTileLayer />
 
-          <FlyToLocation coords={coords} />
+          <FlyToLocation coords={coords} zoom={flyZoom} />
 
           {/* Single marker — moves on every click */}
           {coords && <Marker position={coords} icon={markerIcon} />}
 
           <ClickHandler onPick={handlePick} URI={URI} />
         </MapContainer>
+
+        <button
+          type="button"
+          onClick={locate}
+          disabled={locating}
+          title="Pin my current location"
+          className="absolute top-3 right-3 z-[1000] flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-semibold text-gray-800 shadow-md ring-1 ring-black/10 hover:bg-gray-50 disabled:opacity-70 cursor-pointer"
+        >
+          <FiCrosshair size={14} className={locating ? "animate-spin" : ""} />
+          {locating ? "Locating…" : "Use my location"}
+        </button>
       </div>
+
+      {locError && (
+        <p className="border-t border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600">{locError}</p>
+      )}
 
       {/* Footer */}
       {pinned && (

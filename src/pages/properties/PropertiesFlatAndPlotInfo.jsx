@@ -10,6 +10,7 @@ import DataTable from "react-data-table-component";
 import Loader from "../../components/Loader";
 import FormatPrice from "../../components/FormatPrice";
 import DownloadCSV from "../../components/DownloadCSV";
+import { confirmDialog } from "../../components/ui/Dialogs.jsx";
 
 const GRADIENT = "linear-gradient(94.94deg, #5323DC -8.34%, #8E61FF 97.17%)";
 const inputCls  = "w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-[#5323DC] focus:ring-2 focus:ring-[#5323DC10] transition-all bg-white placeholder:text-slate-300";
@@ -261,7 +262,7 @@ const PropertiesFlatAndPlotInfo = () => {
   };
 
   const del = async (id) => {
-    if (!window.confirm("Delete this entry?")) return;
+    if (!(await confirmDialog("Delete this entry?"))) return;
     try {
       const res = await fetch(URI + `/project-partner/property/additional-info/delete/${id}`, { method: "DELETE", credentials: "include" });
       const data = await res.json();
@@ -270,7 +271,7 @@ const PropertiesFlatAndPlotInfo = () => {
   };
 
   const deleteAll = async () => {
-    if (!window.confirm("Delete ALL data?")) return;
+    if (!(await confirmDialog("Delete ALL data?"))) return;
     try {
       const res = await fetch(URI + `/project-partner/property/additional-info/all/delete/${propertyid}`, { method: "DELETE", credentials: "include" });
       const data = await res.json();
@@ -279,7 +280,7 @@ const PropertiesFlatAndPlotInfo = () => {
   };
 
   const toggleStatus = async (id) => {
-    if (!window.confirm("Change status?")) return;
+    if (!(await confirmDialog("Change status?"))) return;
     try {
       const res = await fetch(URI + `/project-partner/property/additional-info/status/${id}`, { method: "PUT", credentials: "include" });
       const data = await res.json();
@@ -289,7 +290,7 @@ const PropertiesFlatAndPlotInfo = () => {
   };
 
   const toggleReserved = async (id) => {
-    if (!window.confirm(`Reserve this ${category}?`)) return;
+    if (!(await confirmDialog(`Reserve this ${category}?`))) return;
     try {
       const res = await fetch(URI + `/project-partner/property/additional-info/reserved/${id}`, { method: "PUT", credentials: "include" });
       const data = await res.json();

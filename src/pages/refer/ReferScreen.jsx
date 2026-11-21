@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
 
+const BACKEND_URL = (
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
+
 const ROLE_CONFIG = {
   sales: {
     label: "Sales Partner",
     partnerType: "Sales Partner",
     downloadLink:
       "https://play.google.com/store/apps/details?id=com.reparvnewsalesapp",
-    apiUrl: "https://aws-api.reparv.in/sales/profile/",
+    apiUrl: `${BACKEND_URL}/sales/profile/`,
     tokenKey: "salesPartnerToken",
     themeColor: "#0BB501",
     gradient: ["#0BB501", "#059669"],
@@ -16,7 +20,7 @@ const ROLE_CONFIG = {
     partnerType: "Territory Partner",
     downloadLink:
       "https://play.google.com/store/apps/details?id=com.newreparvterritory_app",
-    apiUrl: "https://aws-api.reparv.in/territory-partner/profile/",
+    apiUrl: `${BACKEND_URL}/territory-partner/profile/`,
     tokenKey: "tPersonToken",
     themeColor: "#0078DB",
     gradient: ["#0078DB", "#0047AB"],
@@ -25,7 +29,7 @@ const ROLE_CONFIG = {
     label: "Project Partner",
     partnerType: "Project Partner",
     downloadLink: "https://partners.reparv.in/#registrationForm",
-    apiUrl: "https://aws-api.reparv.in/project-partner/profile/",
+    apiUrl: `${BACKEND_URL}/project-partner/profile/`,
     tokenKey: "projectpartnerPersonToken",
     themeColor: "#5B3EFF",
     gradient: ["#1A0A4F", "#2D1B8E", "#3D2AC4"],

@@ -10,6 +10,7 @@ import {
   imageSectionsFor,
   maxPhotosFor,
 } from "../../utils/propertyListing";
+import { confirmDialog } from "../ui/Dialogs.jsx";
 
 const GRADIENT = "linear-gradient(94.94deg, #5323DC -8.34%, #8E61FF 97.17%)";
 const inputCls =
@@ -236,7 +237,7 @@ export default function UpdateImagesForm({
 
   const handleDelete = async () => {
     if (!selectedType) return alert("Select an image type first.");
-    if (!window.confirm(`Delete all ${selectedType} images?`)) return;
+    if (!(await confirmDialog(`Delete all ${selectedType} images?`))) return;
     try {
       const res = await fetch(
         `${URI}/admin/properties/images/delete/${propertyId}?type=${selectedType}`,

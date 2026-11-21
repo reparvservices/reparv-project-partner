@@ -20,10 +20,15 @@ export const LISTING_TYPES = [
   { key: "Rent", label: "Rent", hint: "List a property for rent" },
 ];
 
+// Venue Booking (villas, halls, farmhouses, event spaces) is a property type too, but it is
+// stored and priced as a venue listing (nightly / per slot) and saved through the venue API.
+export const VENUE_KIND = "Venue";
+
 export const PROPERTY_KINDS = [
   { key: "Residential", label: "Residential" },
   { key: "Commercial", label: "Commercial" },
   { key: "Agriculture", label: "Agriculture / Land" },
+  { key: VENUE_KIND, label: "Venue Booking" },
 ];
 
 // Sell & Buy: new launch or resale (maps to the existing category groups)
@@ -251,7 +256,8 @@ export const areaDisplayFor = (property = {}) => {
 
 /* ── BHK: same options and rules as the partner app ──────────────────────── */
 
-export const BHK_OPTIONS = ["1 RK", "1 BHK", "2 BHK", "3 BHK", "4 BHK", "4+ BHK"];
+// Same list as the website, so the website BHK filters find every listing
+export const BHK_OPTIONS = ["1 RK", "1 BHK", "2 BHK", "2.5 BHK", "3 BHK", "3.5 BHK", "4 BHK", "5 BHK", "Above 5 BHK", "Pent House", "Studio Apartment", "Duplex Apartment"];
 const NO_BHK_CATEGORIES = new Set(["NewPlot", "NewShop", "OfficeSpace", "Showrooms", "Warehouse", "CommercialPlot", "CommercialFlat", "IndustrialSpace", "ResalePlot", "ResaleShop", "ResaleOffice", "ResaleGodown", "ResaleShowroom", "ResaleFarmLand", "ResaleFarmHouse", "RentalPlot", "RentalShop", "RentalOffice", "RentalGodown", "RentalShowroom", "RentalOpenLand", "FarmLand", "FarmHouse"]);
 export const showBhkFor = (category) => !!category && !NO_BHK_CATEGORIES.has(category);
 

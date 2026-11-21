@@ -268,7 +268,8 @@ export const AuthProvider = ({ children }) => {
         showSubscription,
         setShowSubscription,
         delTokenInCookie: clearPartnerSession,
-        isActiveSubscription,
+        // A sales partner works under their project partner's plan and holds no subscription of their own
+        isActiveSubscription: role === "Sales Partner" ? true : isActiveSubscription,
         setIsActiveSubacription,
         subscription,
         subscriptionReady,

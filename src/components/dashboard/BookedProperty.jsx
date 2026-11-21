@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import { getImageURI } from "../../utils/helper";
+import { categoryLabel } from "../../utils/propertyListing";
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600";
 
@@ -65,7 +66,7 @@ function PropertyCard({ item }) {
 
         {/* Property name / category */}
         <p className="font-bold text-slate-900 text-lg mt-3 leading-tight">
-          {item.category}
+          {categoryLabel(item.category)}
           {item.source && <span className="text-slate-400 font-normal text-sm"> · {item.source}</span>}
         </p>
 

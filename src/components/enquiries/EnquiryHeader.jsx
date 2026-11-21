@@ -6,11 +6,12 @@ import { useAuth } from "../../store/auth";
 
 const GRADIENT = "linear-gradient(110.73deg, #5323DC 0%, #8E61FF 100%)";
 
-const sources = ["Select Enquiry Source", "Ads", "Onsite", "Direct", "CSV", "Landing Page", "Digital Broker"];
+const sources = ["Select Enquiry Source", "Ads", "Onsite", "Direct", "CSV", "Landing Page", "Instagram", "Facebook", "Meta Ads", "AI Agent", "Digital Broker"];
 
 export default function EnquiryHeader({ search, setSearch, selectedSource, setSelectedSource, onAddEnquiry, onAddCSV, filteredData, range, setRange }) {
   const navigate = useNavigate();
-  const {isActiveSubscription} = useAuth();
+  const {isActiveSubscription, role} = useAuth();
+  const isSales = role === "Sales Partner"; // importing enquiries from CSV belongs to the project partner
   return (
     <div className="bg-white border-b border-slate-100">
 
@@ -33,7 +34,9 @@ export default function EnquiryHeader({ search, setSearch, selectedSource, setSe
 
         <div className="flex flex-wrap gap-2">
           <SourceSelect value={selectedSource} onChange={setSelectedSource} />
-          <button onClick={onAddCSV} className="bg-[#F2F4FF] p-2.5 rounded-xl"><Upload size={15} className="text-slate-500" /></button>
+          {!isSales && (
+            <button onClick={onAddCSV} className="bg-[#F2F4FF] p-2.5 rounded-xl"><Upload size={15} className="text-slate-500" /></button>
+          )}
           {/* Disable Button if Inactive Subscription */}
           {isActiveSubscription && (
             <DownloadCSV data={filteredData} filename="Enquirers.csv" />
@@ -54,9 +57,11 @@ export default function EnquiryHeader({ search, setSearch, selectedSource, setSe
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search anything..." className="w-56 pl-9 pr-4 py-2 border rounded-md text-sm outline-none focus:border-[#5323DC] bg-white" />
           </div>
           <CustomDateRangePicker range={range} setRange={setRange} />
-          <button onClick={onAddCSV} className="flex items-center gap-2 border px-3.5 py-2 rounded-md bg-white text-sm text-slate-600 hover:bg-slate-50">
-            <Upload size={14} /> Import CSV
-          </button>
+          {!isSales && (
+            <button onClick={onAddCSV} className="flex items-center gap-2 border px-3.5 py-2 rounded-md bg-white text-sm text-slate-600 hover:bg-slate-50">
+              <Upload size={14} /> Import CSV
+            </button>
+          )}
           {/* Disable Button if Inactive Subscription */}
           {isActiveSubscription && (
             <DownloadCSV data={filteredData} filename="Enquirers.csv" />

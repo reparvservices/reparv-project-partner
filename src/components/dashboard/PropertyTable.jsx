@@ -4,6 +4,7 @@ import CustomDateRangePicker from "../CustomDateRangePicker";
 import DashboardFilter from "./DashboardFilter";
 import propertyPicture from "../../assets/propertyPicture.svg";
 import { getImageURI } from "../../utils/helper";
+import { categoryLabel } from "../../utils/propertyListing";
 /**
  * PropertyTable
  * Props:
@@ -95,7 +96,7 @@ export default function PropertyTable({
     },
     {
       name: "Type",
-      selector: row => row.propertyCategory,
+      selector: row => categoryLabel(row.propertyCategory),
       sortable: true,
     },
     {

@@ -20,6 +20,7 @@ import MobileWeekStrip from "../../components/calendar/MobileWeekStrip";
 import MobileFilterChips from "../../components/calendar/MobileFilterChips";
 import MobileEventCards from "../../components/calendar/MobileEventCards";
 import NoteModal from "../../components/calendar/NoteModal";
+import { confirmDialog } from "../../components/ui/Dialogs.jsx";
 
 const IST = "Asia/Kolkata";
 
@@ -181,7 +182,7 @@ export default function Calendar() {
   };
 
   const deleteNote = async (id) => {
-    if (!window.confirm("Delete this note?")) return;
+    if (!(await confirmDialog("Delete this note?"))) return;
     try {
       const res = await fetch(
         `${URI}${getBasePath()}/calender/note/delete/${id}`,

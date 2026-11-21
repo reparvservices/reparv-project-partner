@@ -7,9 +7,9 @@ import { getLockState } from "../../lib/subscriptionLock";
  * Props:
  *   counts : object — from API /project-partner/dashboard/count
  *
- * Renders 8 clickable cards navigating to their respective routes.
- * Matches old dashboard logic: Properties, Customers, Enquiries,
- * Builders, Employees, Sales Partners, Territory Partners, Tickets.
+ * Clickable cards that open their pages: Properties (incl. venues), Enquiries,
+ * Sales Partners and Tickets. Customers, Builders, Employees and Territory
+ * Partners are hidden for now (set `hide: false` to bring one back).
  */
 export default function BusinessOverview({ counts = {} }) {
   const navigate = useNavigate();
@@ -21,7 +21,8 @@ export default function BusinessOverview({ counts = {} }) {
   const items = [
     {
       label: "Properties",
-      value: counts?.totalProperty,
+      // properties plus Venue Booking listings (a venue is a property type)
+      value: (Number(counts?.totalProperty) || 0) + (Number(counts?.totalVenue) || 0),
       route: "/app/properties",
       hide: !isProjectPartner,
       icon: (
@@ -55,7 +56,7 @@ export default function BusinessOverview({ counts = {} }) {
       label: "Customers",
       value: counts?.totalCustomer,
       route: "/app/customers",
-      hide: false,
+      hide: true, // hidden for now (deals done is shown in the stat cards above)
       icon: (
         <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
           <rect width="36" height="36" rx="10" fill="#F0FDF4" />
@@ -98,7 +99,7 @@ export default function BusinessOverview({ counts = {} }) {
       label: "Builders",
       value: counts?.totalBuilder,
       route: "/app/builders",
-      hide: !isProjectPartner,
+      hide: true, // Builders hidden for now (was: !isProjectPartner)
       icon: (
         <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
           <rect width="36" height="36" rx="10" fill="#FEF2F2" />
@@ -121,6 +122,7 @@ export default function BusinessOverview({ counts = {} }) {
     },
     {
       label: "Employees", value: counts?.totalEmployee, route: "/app/employees",
+      hide: true, // Employees hidden for now
       icon: (
         <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
           <rect width="36" height="36" rx="10" fill="#F5F3FF" />
@@ -165,7 +167,7 @@ export default function BusinessOverview({ counts = {} }) {
       label: "Territory Partners",
       value: counts?.totalTerritoryPartner,
       route: "/app/territory-partners",
-      hide: !isProjectPartner,
+      hide: true, // Territory Partners hidden for now (was: !isProjectPartner)
       icon: (
         <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
           <rect width="36" height="36" rx="10" fill="#FFFBEB" />

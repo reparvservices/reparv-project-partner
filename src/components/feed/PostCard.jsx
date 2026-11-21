@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { api, parseMedia, isVideo, timeAgo } from "./FeedUtils";
 import { Icon, Avatar, RoleBadge, ActionBtn } from "./FeedPrimitives";
 import { getImageURI } from "../../utils/helper";
+import { confirmDialog } from "../ui/Dialogs.jsx";
 
 // ─── Media Grid ───────────────────────────────────────────────────────────────
 function MediaGrid({ urls }) {
@@ -117,7 +118,7 @@ export default function PostCard({ post, actor, onDeleted, onUpdated }) {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Delete this post?")) return;
+    if (!(await confirmDialog("Delete this post?"))) return;
     try {
       await api(`/posts/${post.id}`, { method: "DELETE", body: JSON.stringify({ user_id: actor.user_id, user_role: actor.user_role }) });
       onDeleted?.(post.id);

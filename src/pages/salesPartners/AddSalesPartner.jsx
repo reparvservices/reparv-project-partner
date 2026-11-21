@@ -99,6 +99,7 @@ export default function AddSalesPartner() {
   const [form, setForm] = useState({
     fullname: "", contact: "", email: "", state: "", city: "", intrest: "",
     experience: "", previousbrokerage: "", bio: "", status: "Active",
+    username: "", password: "",
   });
   const [errors, setErrors]         = useState({});
   const [photoFile, setPhotoFile]   = useState(null);
@@ -143,6 +144,8 @@ export default function AddSalesPartner() {
     if (!form.state)            e.state    = "State is required";
     if (!form.city)             e.city     = "City is required";
     if (!form.intrest)          e.intrest  = "Please select your interest";
+    if (!form.username.trim())  e.username = "Username is required";
+    if (form.password.length < 8) e.password = "Password must be at least 8 characters";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -158,11 +161,18 @@ export default function AddSalesPartner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (r.status === 409) { alert("Sales partner already exists!"); return; }
-      if (!r.ok) throw new Error(`Status: ${r.status}`);
+      const data = await r.json().catch(() => ({}));
+      if (r.status === 409) { alert(data.message || "Sales partner already exists!"); return; }
+      if (!r.ok) {
+        // Local servers run with writes blocked: say so instead of a vague error
+        if (data?.error?.code === "READ_ONLY_DB_BLOCKED") {
+          throw new Error("This server is in read-only mode, so nothing can be saved here.");
+        }
+        throw new Error(data.message || `Could not save (status ${r.status})`);
+      }
       alert("Sales partner added successfully!");
       navigate("/app/sales-partners");
-    } catch (e) { console.error(e); alert("Please check all fields and try again."); }
+    } catch (e) { console.error(e); alert(e.message || "Please check all fields and try again."); }
     finally { setLoading(false); }
   };
 
@@ -195,6 +205,12 @@ export default function AddSalesPartner() {
               <Input label="Email Address" required type="email" placeholder="rahul@example.com"
                 value={form.email} onChange={(e) => handleChange("email", e.target.value)}
                 error={errors.email} />
+              <Input label="Login Username" required placeholder="rahul.sharma"
+                value={form.username} onChange={(e) => handleChange("username", e.target.value)}
+                error={errors.username} />
+              <Input label="Login Password" required type="password" placeholder="At least 8 characters"
+                value={form.password} onChange={(e) => handleChange("password", e.target.value)}
+                error={errors.password} />
 
               {/* Profile Photo */}
               <div>

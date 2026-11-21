@@ -22,6 +22,7 @@ import { IoMdClose } from "react-icons/io";
 import { FiMoreVertical } from "react-icons/fi";
 import DataTable from "react-data-table-component";
 import { useAuth } from "../../store/auth";
+import { confirmDialog } from "../ui/Dialogs.jsx";
 
 const GRADIENT = "linear-gradient(110.73deg, #5E23DC 0%, #7C3AED 100%)";
 const PAGE_SIZE = 5;
@@ -375,7 +376,7 @@ function DepartmentTab({ URI }) {
   };
 
   const del = async (id) => {
-    if (!window.confirm("Delete this department?")) return;
+    if (!(await confirmDialog("Delete this department?"))) return;
     try {
       const res = await fetch(
         `${URI}/project-partner/departments/delete/${id}`,
@@ -392,7 +393,7 @@ function DepartmentTab({ URI }) {
   };
 
   const status = async (id) => {
-    if (!window.confirm("Change this department's status?")) return;
+    if (!(await confirmDialog("Change this department's status?"))) return;
     try {
       const res = await fetch(
         `${URI}/project-partner/departments/status/${id}`,
@@ -460,8 +461,8 @@ function DepartmentTab({ URI }) {
 
           {/* Change Status */}
           <button
-            onClick={() => {
-              if (window.confirm("Change status?")) {
+            onClick={async () => {
+              if ((await confirmDialog("Change status?"))) {
                 status(row.departmentid);
               }
             }}
@@ -473,8 +474,8 @@ function DepartmentTab({ URI }) {
 
           {/* Delete */}
           <button
-            onClick={() => {
-              if (window.confirm("Are you sure you want to delete?")) {
+            onClick={async () => {
+              if ((await confirmDialog("Are you sure you want to delete?"))) {
                 del(row.departmentid);
               }
             }}
@@ -628,7 +629,7 @@ function RoleTab({ URI }) {
   };
 
   const del = async (id) => {
-    if (!window.confirm("Delete this role?")) return;
+    if (!(await confirmDialog("Delete this role?"))) return;
     try {
       const res = await fetch(`${URI}/project-partner/roles/delete/${id}`, {
         method: "DELETE",
@@ -645,7 +646,7 @@ function RoleTab({ URI }) {
   };
 
   const status = async (id) => {
-    if (!window.confirm("Change this role's status?")) return;
+    if (!(await confirmDialog("Change this role's status?"))) return;
     try {
       const res = await fetch(`${URI}/project-partner/roles/status/${id}`, {
         method: "PUT",
@@ -714,8 +715,8 @@ function RoleTab({ URI }) {
 
           {/* Change Status */}
           <button
-            onClick={() => {
-              if (window.confirm("Change status?")) {
+            onClick={async () => {
+              if ((await confirmDialog("Change status?"))) {
                 status(row.roleid);
               }
             }}
@@ -727,8 +728,8 @@ function RoleTab({ URI }) {
 
           {/* Delete */}
           <button
-            onClick={() => {
-              if (window.confirm("Are you sure you want to delete?")) {
+            onClick={async () => {
+              if ((await confirmDialog("Are you sure you want to delete?"))) {
                 del(row.roleid);
               }
             }}
@@ -1400,8 +1401,8 @@ export default function EmployeeTable({
                   onView={setViewEmp}
                   onEdit={onEdit}
                   onDelete={setDeleteEmp}
-                  onStatus={(emp) => {
-                    if (window.confirm(`Change status for ${emp.name}?`))
+                  onStatus={async (emp) => {
+                    if ((await confirmDialog(`Change status for ${emp.name}?`)))
                       onToggleStatus && onToggleStatus(emp);
                   }}
                   onAssignTask={setAssignTaskEmp}
@@ -1549,9 +1550,9 @@ export default function EmployeeTable({
                             <KeyRound size={15} />
                           </button>
                           <button
-                            onClick={() => {
+                            onClick={async () => {
                               if (
-                                window.confirm(`Change status for ${emp.name}?`)
+                                (await confirmDialog(`Change status for ${emp.name}?`))
                               )
                                 onToggleStatus && onToggleStatus(emp);
                             }}

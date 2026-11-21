@@ -83,7 +83,16 @@ function Field({ label, hint, error, children, required }) {
   );
 }
 
-export default function VenueForm({ initial, editing, onCancel, onSave, setBusy }) {
+/** embedded: rendered inside the property page, which supplies the page header */
+export default function VenueForm({
+  initial,
+  editing,
+  onCancel,
+  onSave,
+  setBusy,
+  embedded = false,
+  submitLabel = "Save & submit for approval",
+}) {
   const [form, setForm] = useState(() => formFromListing(initial));
   const [step, setStep] = useState(editing ? 1 : 0);
   const [errors, setErrors] = useState({});
@@ -197,10 +206,14 @@ export default function VenueForm({ initial, editing, onCancel, onSave, setBusy 
   const typeName = form.type === "other" ? form.custom_type || "Venue" : cfg.label;
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto">
-      <button className="text-sm text-gray-600 mb-3" onClick={onCancel}>← Back to my venues</button>
-      <h1 className="text-xl font-semibold mb-1">{editing ? "Edit venue" : "List a venue"}</h1>
-      <p className="text-sm text-gray-500 mb-4">Villas, halls, farmhouses and event spaces, booked directly by customers.</p>
+    <div className={embedded ? "" : "p-4 md:p-6 max-w-3xl mx-auto"}>
+      {!embedded && (
+        <>
+          <button className="text-sm text-gray-600 mb-3" onClick={onCancel}>← Back to my venues</button>
+          <h1 className="text-xl font-semibold mb-1">{editing ? "Edit venue" : "List a venue"}</h1>
+          <p className="text-sm text-gray-500 mb-4">Villas, halls, farmhouses and event spaces, booked directly by customers.</p>
+        </>
+      )}
 
       {/* Stepper */}
       <div className="flex items-center gap-1 mb-6 overflow-x-auto scrollbar-hide">
@@ -422,7 +435,7 @@ export default function VenueForm({ initial, editing, onCancel, onSave, setBusy 
               {saving ? "Saving…" : "Save as draft"}
             </button>
             <button type="button" disabled={saving || !!uploading} onClick={() => save(true)} style={{ background: GRADIENT }} className="px-6 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60">
-              {saving ? "Saving…" : "Save & submit for approval"}
+              {saving ? "Saving…" : submitLabel}
             </button>
           </div>
         )}

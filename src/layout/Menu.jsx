@@ -607,24 +607,26 @@ export default function Menu() {
             onClick={() => go("/app/customers")}
             locked={lockedFor("/app/customers")}
           />
+          {/* Builders hidden for now
           <MenuItem
             icon={<BuildingIcon />}
             label="Builders"
             onClick={() => go("/app/builders")}
             locked={lockedFor("/app/builders")}
-          />
+          /> */}
           <MenuItem
             icon={<HandshakeIcon />}
             label="Sales Partners"
             onClick={() => go("/app/sales-partners")}
             locked={lockedFor("/app/sales-partners")}
           />
+          {/* Territory Partners hidden for now
           <MenuItem
             icon={<MapIcon />}
             label="Territory Partners"
             onClick={() => go("/app/territory-partners")}
             locked={lockedFor("/app/territory-partners")}
-          />
+          /> */}
         </Section>
 
         {/* BUSINESS MODULES */}

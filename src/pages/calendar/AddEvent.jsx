@@ -9,6 +9,7 @@ import ScheduleDetails from "../../components/calendar/addEvent/ScheduleDetails"
 import LocationNotes from "../../components/calendar/addEvent/LocationNotes";
 import AssignmentPanel from "../../components/calendar/addEvent/AssignmentPanel";
 import AddEventFooter from "../../components/calendar/addEvent/AddEventFooter";
+import { confirmDialog } from "../../components/ui/Dialogs.jsx";
 
 const DEFAULT_FORM = {
   title: "",
@@ -218,7 +219,7 @@ export default function AddEvent({ eventId = null, onBack, onSave, onCancel }) {
   // ── DELETE ────────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
     if (!eventId) return;
-    if (!window.confirm("Delete this event?")) return;
+    if (!(await confirmDialog("Delete this event?"))) return;
 
     setDeleting(true);
     setError("");

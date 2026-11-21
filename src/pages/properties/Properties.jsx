@@ -10,6 +10,7 @@ import PropertyFilter from "../../components/properties/PropertyFilter";
 import PropertyCard from "../../components/properties/PropertyCard";
 import PropertySidebar from "../../components/properties/PropertySidebar";
 import PropertyModals from "../../components/properties/PropertyModals";
+import { confirmDialog } from "../../components/ui/Dialogs.jsx";
 
 export default function Properties() {
   const navigate = useNavigate();
@@ -140,7 +141,7 @@ export default function Properties() {
   };
 
   const del = async (id) => {
-    if (!window.confirm("Delete this property?")) return;
+    if (!(await confirmDialog("Delete this property?"))) return;
     try {
       const res = await fetch(
         URI + `/project-partner/properties/delete/${id}`,
@@ -158,7 +159,7 @@ export default function Properties() {
   };
 
   const status = async (id) => {
-    if (!window.confirm("Change property status?")) return;
+    if (!(await confirmDialog("Change property status?"))) return;
     try {
       const res = await fetch(
         URI + `/project-partner/properties/status/${id}`,
@@ -173,7 +174,7 @@ export default function Properties() {
   };
 
   const hotDeal = async (id) => {
-    if (!window.confirm("Change hot deal status?")) return;
+    if (!(await confirmDialog("Change hot deal status?"))) return;
     try {
       const res = await fetch(URI + `/admin/properties/set/hotdeal/${id}`, {
         method: "PUT",

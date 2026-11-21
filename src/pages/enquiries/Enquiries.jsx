@@ -6,10 +6,13 @@ import EnquiryTabs from "../../components/enquiries/EnquiryTabs";
 import EnquiryCard from "../../components/enquiries/EnquiryCard";
 import QuickStats from "../../components/enquiries/QuickStats";
 import EnquiryModals from "../../components/enquiries/EnquiryModals";
+import { enquiryPaths } from "../../lib/roleApi";
+import { confirmDialog } from "../../components/ui/Dialogs.jsx";
 
 export default function Enquiries() {
   const {
     URI,
+    role,
     setLoading,
     isActiveSubscription,
     showAssignSalesForm,
@@ -27,6 +30,9 @@ export default function Enquiries() {
     enquiryFilter,
     setEnquiryFilter,
   } = useAuth();
+
+  // Project partners and sales partners use different APIs for the same screen
+  const paths = enquiryPaths(role);
 
   const [datas, setDatas] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("");
@@ -114,7 +120,7 @@ export default function Enquiries() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${URI}/project-partner/enquirers/get/${selectedSource}`,
+        `${URI}${paths.enquirers}/get/${selectedSource}`,
         {
           method: "GET",
           credentials: "include",
@@ -133,7 +139,7 @@ export default function Enquiries() {
   const fetchEnquiryRemarkList = async (id) => {
     try {
       const res = await fetch(
-        URI + "/project-partner/enquirers/remark/list/" + id,
+        URI + paths.enquirers + "/remark/list/" + id,
         {
           method: "GET",
           credentials: "include",
@@ -150,7 +156,7 @@ export default function Enquiries() {
   const fetchProperties = async () => {
     try {
       setError("");
-      const res = await fetch(URI + "/project-partner/enquirers/properties", {
+      const res = await fetch(URI + paths.enquirers + "/properties", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -180,7 +186,7 @@ export default function Enquiries() {
   const fetchPropertyList = async (id) => {
     try {
       const res = await fetch(
-        URI + "/project-partner/enquirers/property/list/" + id,
+        URI + paths.enquirers + "/property/list/" + id,
         {
           method: "GET",
           credentials: "include",
@@ -196,6 +202,7 @@ export default function Enquiries() {
   };
 
   const fetchSalesPersonList = async () => {
+    if (paths.isSales) return; // only a project partner assigns enquiries to sales partners
     try {
       const res = await fetch(URI + "/project-partner/sales/active", {
         method: "GET",
@@ -211,7 +218,7 @@ export default function Enquiries() {
 
   const viewEnquiry = async (id) => {
     try {
-      const res = await fetch(URI + `/project-partner/enquirers/${id}`, {
+      const res = await fetch(URI + `${paths.enquirers}/${id}`, {
         method: "GET",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -231,7 +238,7 @@ export default function Enquiries() {
       : "add/enquiry";
     try {
       setLoading(true);
-      const res = await fetch(`${URI}/project-partner/enquiry/${endpoint}`, {
+      const res = await fetch(`${URI}${paths.enquiry}/${endpoint}`, {
         method: newEnquiry.enquirersid ? "PUT" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -263,7 +270,7 @@ export default function Enquiries() {
 
   const editEnquiry = async (id) => {
     try {
-      const res = await fetch(`${URI}/project-partner/enquirers/${id}`, {
+      const res = await fetch(`${URI}${paths.enquirers}/${id}`, {
         method: "GET",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -277,7 +284,7 @@ export default function Enquiries() {
   };
 
   const toDigitalBroker = async (id) => {
-    if (!window.confirm("Convert this Enquiry to Digital Broker?")) return;
+    if (!(await confirmDialog("Convert this Enquiry to Digital Broker?"))) return;
     try {
       const res = await fetch(
         URI + `/project-partner/enquirers/convert/to/digital-broker/${id}`,
@@ -318,7 +325,7 @@ export default function Enquiries() {
   };
 
   const deleteEnquiry = async (id) => {
-    if (!window.confirm("Delete this Enquiry?")) return;
+    if (!(await confirmDialog("Delete this Enquiry?"))) return;
     try {
       setLoading(true);
       const res = await fetch(URI + `/project-partner/enquirers/delete/${id}`, {
@@ -339,7 +346,7 @@ export default function Enquiries() {
 
   const assignSalesPerson = async (e) => {
     e.preventDefault();
-    if (!window.confirm(`Assign to ${salesPersonAssign.salesperson}?`)) return;
+    if (!(await confirmDialog(`Assign to ${salesPersonAssign.salesperson}?`))) return;
     try {
       setLoading(true);
       const res = await fetch(
@@ -367,127 +374,90 @@ export default function Enquiries() {
     }
   };
 
+  // One request per action. The server saves the remark / visit / deal AND moves the enquiry to its
+  // new status together, so the two can never drift apart (before, the panel saved the remark and
+  // then made a second call that could be declined or fail, leaving the status unchanged).
   const changeEnquiryStatus = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    const JSON_HEADERS = { "Content-Type": "application/json" };
+    let url;
+    let init;
+    let onSuccess = () => {};
 
     if (enquiryStatus === "Visit Scheduled") {
-      if (!visitDate || !visitRemark) return alert("All Fields Are Required!");
-      try {
-        const res = await fetch(
-          `${URI}/project-partner/enquirers/visitscheduled/${enquiryId}`,
-          {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ visitDate, visitRemark, enquiryStatus }),
-          },
-        );
-        const data = await res.json();
-        alert(res.ok ? `Success: ${data.message}` : `Error: ${data.message}`);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (enquiryStatus === "Token") {
+      if (!visitDate || !visitRemark) return alert("Please add the visit date and a remark.");
+      url = `${URI}${paths.enquirers}/visitscheduled/${enquiryId}`;
+      init = {
+        method: "POST",
+        credentials: "include",
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ visitDate, visitRemark, enquiryStatus }),
+      };
+      onSuccess = () => {
+        setVisitRemark("");
+        setVisitDate("");
+      };
+    } else if (enquiryStatus === "Token") {
       if (!token.dealamount || !token.paymenttype || !token.remark)
-        return alert("All Fields Are Required!");
+        return alert("Please add the deal amount, payment type and a remark.");
       const formData = new FormData();
       Object.entries(token).forEach(([k, v]) => formData.append(k, v));
       formData.append("enquiryStatus", enquiryStatus);
       if (selectedImage) formData.append("paymentimage", selectedImage);
-      try {
-        const res = await fetch(
-          `${URI}/project-partner/enquirers/token/${enquiryId}`,
-          { method: "POST", credentials: "include", body: formData },
-        );
-        const data = await res.json();
-        res.ok
-          ? (alert(`Success: ${data.message}`),
-            setToken({
-              paymenttype: "",
-              tokenamount: "",
-              dealamount: "",
-              remark: "",
-            }))
-          : alert(`Error: ${data.message}`);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+      url = `${URI}${paths.enquirers}/token/${enquiryId}`;
+      init = { method: "POST", credentials: "include", body: formData };
+      onSuccess = () =>
+        setToken({ paymenttype: "", tokenamount: "", dealamount: "", remark: "" });
+    } else if (enquiryStatus === "Follow Up") {
+      if (!followUpRemark) return alert("Please add a follow-up remark.");
+      url = `${URI}${paths.enquirers}/followup/${enquiryId}`;
+      init = {
+        method: "POST",
+        credentials: "include",
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ followUpRemark, visitDate, enquiryStatus }),
+      };
+      onSuccess = () => {
+        setFollowUpRemark("");
+        setVisitDate("");
+      };
+    } else if (enquiryStatus === "Cancelled") {
+      if (!cancelledRemark) return alert("Please add the reason for cancelling.");
+      url = `${URI}${paths.enquirers}/cancelled/${enquiryId}`;
+      init = {
+        method: "POST",
+        credentials: "include",
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ cancelledRemark, enquiryStatus }),
+      };
+      onSuccess = () => setCancelledRemark("");
+    } else {
+      // A plain status change (for example back to "New") has no remark to save
+      if (!enquiryStatus) return alert("Please choose a status.");
+      url = `${URI}${paths.enquirers}/status/${enquiryId}`;
+      init = {
+        method: "PUT",
+        credentials: "include",
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ enquiryStatus }),
+      };
     }
 
-    if (enquiryStatus === "Follow Up") {
-      if (!followUpRemark) return alert("All Fields Are Required!");
-      try {
-        const res = await fetch(
-          `${URI}/project-partner/enquirers/followup/${enquiryId}`,
-          {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ followUpRemark, visitDate, enquiryStatus }),
-          },
-        );
-        const data = await res.json();
-        res.ok
-          ? (alert(`Success: ${data.message}`),
-            setFollowUpRemark(""),
-            setVisitDate(""))
-          : alert(`Error: ${data.message}`);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (enquiryStatus === "Cancelled") {
-      if (!cancelledRemark) return alert("All Fields Are Required!");
-      try {
-        const res = await fetch(
-          `${URI}/project-partner/enquirers/cancelled/${enquiryId}`,
-          {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ cancelledRemark, enquiryStatus }),
-          },
-        );
-        const data = await res.json();
-        res.ok
-          ? (alert(`Success: ${data.message}`), setCancelledRemark(""))
-          : alert(`Error: ${data.message}`);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (!window.confirm("Change Enquiry status?")) return;
+    setLoading(true);
     try {
-      const res = await fetch(
-        `${URI}/project-partner/enquirers/status/${enquiryId}`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enquiryStatus }),
-        },
-      );
-      const data = await res.json();
-      res.ok
-        ? (alert(`Success: ${data.message}`),
-          setShowEnquiryStatusForm(false),
-          fetchData())
-        : alert(`Error: ${data.message}`);
-    } catch (e) {
-      console.error(e);
+      const res = await fetch(url, init);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(`Error: ${data.message || "Could not update the enquiry"}`);
+        return;
+      }
+      alert(`Success: ${data.message || "Enquiry updated"}`);
+      onSuccess();
+      setShowEnquiryStatusForm(false);
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      alert("Could not reach the server. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -520,6 +490,8 @@ export default function Enquiries() {
 
   /* ── Action handler passed to cards ── */
   const handleAction = (action, id, row) => {
+    // Assigning, converting and deleting belong to the project partner
+    if (paths.isSales && ["assign", "todigitalbroker", "delete"].includes(action)) return;
     switch (action) {
       case "view":
         viewEnquiry(id);

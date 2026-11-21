@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import JoinPartnerModal from "../components/partnerPage/JoinPartnerModal";
 
 const PartnerJoinContext = createContext(null);
@@ -29,8 +30,11 @@ function markPartnerModalAutoShown() {
 
 export function PartnerJoinProvider({ children }) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Auto-popup disabled: every "Get started" goes to /login?mode=signup instead.
+    if (true) return undefined;
     try {
       if (!shouldAutoShowPartnerModal()) return undefined;
 
@@ -45,9 +49,10 @@ export function PartnerJoinProvider({ children }) {
     }
   }, []);
 
+  // "Get started" on the landing page opens the combined sign-up / sign-in page.
   const openJoinModal = useCallback(() => {
-    setOpen(true);
-  }, []);
+    navigate("/login?mode=signup");
+  }, [navigate]);
 
   const closeJoinModal = useCallback(() => {
     setOpen(false);

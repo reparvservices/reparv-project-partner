@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../store/auth";
 import VenueForm from "./VenueForm";
+import { confirmDialog, promptDialog } from "../../components/ui/Dialogs.jsx";
 
 const GRADIENT = "linear-gradient(110.73deg, #5323DC 0%, #8E61FF 97.17%)";
 const STATUS = {
@@ -82,9 +83,9 @@ export default function Venues() {
   };
 
   const block = async (l, unblock) => {
-    const from = window.prompt(`${unblock ? "Unblock" : "Block"} from date (YYYY-MM-DD)`);
+    const from = (await promptDialog(`${unblock ? "Unblock" : "Block"} from date (YYYY-MM-DD)`));
     if (!from) return;
-    const to = window.prompt("To date (YYYY-MM-DD, inclusive)", from);
+    const to = (await promptDialog("To date (YYYY-MM-DD, inclusive)", from));
     if (!to) return;
     try {
       const data = await call(`/${l.id}/${unblock ? "unblock" : "block"}`, {
@@ -98,7 +99,7 @@ export default function Venues() {
   };
 
   const cancelBooking = async (b) => {
-    if (!window.confirm(`Cancel ${b.booking_ref}? The guest gets a full refund (₹${b.amount_paid}).`)) return;
+    if (!(await confirmDialog(`Cancel ${b.booking_ref}? The guest gets a full refund (₹${b.amount_paid}).`))) return;
     try {
       const data = await call(`/bookings/${b.id}/cancel`, { method: "POST", body: JSON.stringify({ reason: "Cancelled by owner" }) });
       alert(`Cancelled. Refund: ₹${data.refund_amount} (${data.refund_status}).`);

@@ -10,6 +10,7 @@ import {
   ViewTicketModal,
   AddResponseModal,
 } from "../../components/tickets/TicketsModals";
+import { confirmDialog } from "../../components/ui/Dialogs.jsx";
 
 export default function Tickets() {
   const navigate = useNavigate();
@@ -165,7 +166,7 @@ export default function Tickets() {
 
   /* ── delete ── */
   const del = async (id) => {
-    if (!window.confirm("Delete this ticket?")) return;
+    if (!(await confirmDialog("Delete this ticket?"))) return;
     try {
       const r = await fetch(`${URI}${getBasePath()}/tickets/delete/${id}`, {
         method: "DELETE",

@@ -17,13 +17,14 @@ import LocationForm from "../../components/properties/addProperty/LocationForm";
 import MediaGallery from "../../components/properties/addProperty/MediaGallery";
 import VideoLinksForm, { youtubeRegex, instagramReelRegex } from "../../components/properties/addProperty/VideoLinksForm";
 import ListingQualitySidebar from "../../components/properties/addProperty/ListingQualitySidebar";
+import { confirmDialog } from "../../components/ui/Dialogs.jsx";
 
 const nameRegex  = /^[A-Za-z0-9\s.,'&()-]+$/;
 const lettersRegex = /^[A-Za-z\s]+$/;
 const pincodeRegex = /^\d{6}$/;
 const SHOWABLE_IMAGE = /^image\/(jpeg|png|webp|gif)$/;
 const phoneRegex = /^[6-9]\d{9}$/;
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const EMPTY_FORM = {
   listingType: "Sell", propertyKind: "Residential", propertyCategory: "", propertyType: "", propertyName: "", builtUpArea: "", carpetArea: "",
@@ -120,10 +121,10 @@ export default function AddProperty() {
   }, [form.state]);
 
   // Publishing needs an active plan (server answers 402 SUBSCRIPTION_REQUIRED otherwise)
-  const askToSubscribe = (message) => {
-    const go = window.confirm(
+  const askToSubscribe = async (message) => {
+    const go = (await confirmDialog(
       `${message || "An active subscription is required to publish properties."}\n\nOpen the Subscription page to start a plan or free trial?`,
-    );
+    ));
     if (go) navigate("/app/subscription");
   };
 

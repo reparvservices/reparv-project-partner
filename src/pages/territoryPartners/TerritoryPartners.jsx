@@ -13,6 +13,7 @@ import {
   ViewTerritoryPartnerModal,
   FOLLOWUP_COLOR,
 } from "../../components/territoryPartners/TerritoryPartnersModals";
+import { confirmDialog } from "../../components/ui/Dialogs.jsx";
 
 const EMPTY_PARTNER = { fullname: "", contact: "", email: "", state: "", city: "", intrest: "" };
 
@@ -128,7 +129,7 @@ export default function TerritoryPartners() {
   };
 
   const del = async (id) => {
-    if (!window.confirm("Delete this Partner?")) return;
+    if (!(await confirmDialog("Delete this Partner?"))) return;
     try {
       setLoading(true);
       const r = await fetch(`${URI}/admin/territorypartner/delete/${id}`, {
@@ -140,7 +141,7 @@ export default function TerritoryPartners() {
   };
 
   const statusToggle = async (id) => {
-    if (!window.confirm("Change status?")) return;
+    if (!(await confirmDialog("Change status?"))) return;
     try {
       const r = await fetch(`${URI}/admin/territorypartner/status/${id}`, {
         method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" },
@@ -192,7 +193,7 @@ export default function TerritoryPartners() {
 
   const assignLogin = async (e) => {
     e.preventDefault();
-    if (!window.confirm("Assign login to this Partner?")) return;
+    if (!(await confirmDialog("Assign login to this Partner?"))) return;
     try {
       setLoading(true);
       const r = await fetch(`${URI}/admin/territorypartner/assignlogin/${partnerId}`, {

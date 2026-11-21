@@ -91,7 +91,6 @@ export default function Dashboard() {
       if (!res.ok) throw new Error("Failed to fetch counts");
       const data = await res.json();
       setCounts(data);
-      console.log(data);
     } catch (err) {
       console.error("fetchCounts error:", err);
     }

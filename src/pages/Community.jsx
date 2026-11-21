@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { getImageURI } from "../utils/helper";
 import { Icon, SidebarSkeleton } from "../components/feed/FeedPrimitives";
 import { followApi } from "../components/feed/FeedUtils";
+import { confirmDialog } from "../components/ui/Dialogs.jsx";
 
 // ─────────────────────────────────────────────────────────────
 //  CONFIG
@@ -505,7 +506,7 @@ function PostCard({ post: initialPost, onRefresh }) {
 
   async function handleDelete() {
     setMenuOpen(false);
-    if (!window.confirm("Delete this post?")) return;
+    if (!(await confirmDialog("Delete this post?"))) return;
     const actor = getActor();
     try {
       await apiFetch(`/posts/${post.id}`, {

@@ -3,6 +3,7 @@ import { FiPhone, FiMessageSquare, FiCalendar, FiCheckCircle } from "react-icons
 import { Tag, MapPin, ChevronDown, Filter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getImageURI } from "../../utils/helper";
+import { categoryLabel } from "../../utils/propertyListing";
 
 /* ── Status config ─────────────────────────────────────── */
 const STATUS = {
@@ -138,7 +139,7 @@ export default function RecentEnquiries({ enquiries = [] }) {
               {/* Category + budget + city */}
               <div className="min-w-[150px] hidden lg:block">
                 <p className="text-sm font-semibold text-slate-700">
-                  {item.category}
+                  {categoryLabel(item.category)}
                   {budget && <span className="text-slate-400 font-normal"> • {budget}</span>}
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">{item.city}, {item.state}</p>
@@ -229,7 +230,7 @@ export default function RecentEnquiries({ enquiries = [] }) {
                   <div className="flex items-center gap-4 text-sm text-slate-500 pb-3 border-b border-slate-100">
                     <span className="flex items-center gap-1.5">
                       <Tag size={13} className="text-slate-400" />
-                      {item.category}
+                      {categoryLabel(item.category)}
                       {budget && <span className="text-slate-700 font-semibold"> • {budget}</span>}
                     </span>
                     <span className="flex items-center gap-1">
