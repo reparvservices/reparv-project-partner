@@ -101,6 +101,8 @@ function Login() {
   const [signup, setSignup] = useState(EMPTY_SIGNUP);
   const [otp, setOtp] = useState("");
   const [signupBusy, setSignupBusy] = useState(false);
+  // true when the signup phone/email already has an account (server 409)
+  const [signupExisting, setSignupExisting] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
 
   useEffect(() => {
@@ -111,6 +113,7 @@ function Login() {
 
   const switchMode = (next) => {
     setErrorMessage("");
+    setSignupExisting(false);
     setInfoMessage("");
     setSignupStep("details");
     if (next === "signup") {
@@ -191,6 +194,7 @@ function Login() {
   const sendCode = async (e) => {
     e?.preventDefault();
     setErrorMessage("");
+    setSignupExisting(false);
     setInfoMessage("");
     const problem = detailsProblem();
     if (problem) {
@@ -205,6 +209,7 @@ function Login() {
       setInfoMessage(`We sent a verification code to ${signup.phone}.`);
     } catch (err) {
       setErrorMessage(err.message || "Could not send the code. Please try again.");
+      setSignupExisting(Boolean(err.existingAccount));
     } finally {
       setSignupBusy(false);
     }
@@ -213,6 +218,7 @@ function Login() {
   const createAccount = async (e) => {
     e.preventDefault();
     setErrorMessage("");
+    setSignupExisting(false);
     setInfoMessage("");
     if (!otp.trim()) {
       setErrorMessage("Enter the verification code we sent you.");
@@ -237,10 +243,49 @@ function Login() {
       setInfoMessage("Account created. Sign in with your email and password.");
     } catch (err) {
       setErrorMessage(err.message || "Could not create your account. Please try again.");
+      setSignupExisting(Boolean(err.existingAccount));
     } finally {
       setSignupBusy(false);
     }
   };
+
+  // Signup errors are shown right above the submit button, where the user is
+  // looking, instead of in the banner at the top of the scrolled panel.
+  const signupNotice =
+    errorMessage && mode === "signup" ? (
+      signupExisting ? (
+        <div className="mt-5 rounded-xl border border-[#6C35DE]/20 bg-[#F5F0FF] px-4 py-4 text-left">
+          <p className="text-sm font-semibold text-[#2A1466]">You already have an account</p>
+          <p className="mt-1 text-sm text-gray-700">{errorMessage}</p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => {
+                switchMode("signin");
+                setEmailOrUsername(signup.email.trim());
+              }}
+              className="flex-1 h-11 rounded-full bg-gradient-to-r from-[#5E23DC] to-[#7c3aed] text-sm font-semibold text-white"
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMessage("");
+                setSignupExisting(false);
+              }}
+              className="flex-1 h-11 rounded-full border border-[#6C35DE]/30 bg-white text-sm font-semibold text-[#6C35DE]"
+            >
+              Use different details
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {errorMessage}
+        </div>
+      )
+    ) : null;
 
   if (!authReady) {
     return <AuthGateLoader />;
@@ -274,7 +319,7 @@ function Login() {
             <div className="flex flex-1 flex-col justify-center overflow-y-auto px-6 py-8 sm:px-10 lg:px-12 xl:px-16">
               <div className="mx-auto w-full max-w-md">
 
-                {errorMessage ? (
+                {errorMessage && mode === "signin" ? (
                   <Banner tone="error">{errorMessage}</Banner>
                 ) : null}
                 {infoMessage ? (
@@ -514,6 +559,7 @@ function Login() {
                       </FieldShell>
                     </div>
 
+                    {signupNotice}
                     <button
                       type="submit"
                       disabled={signupBusy}
@@ -557,6 +603,7 @@ function Login() {
                       />
                     </FieldShell>
 
+                    {signupNotice}
                     <button
                       type="submit"
                       disabled={signupBusy}

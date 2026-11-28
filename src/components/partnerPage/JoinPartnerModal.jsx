@@ -108,6 +108,43 @@ function OtpInputs({ value, onChange, disabled }) {
   );
 }
 
+// Shows a join error. When the number/email already has an account, it shows a
+// clear notice with a Sign in action instead of a plain red line.
+function JoinErrorNotice({ error, existingAccount, centered, onSignIn, onChangeDetails }) {
+  if (!error) return null;
+  if (!existingAccount) {
+    return (
+      <p
+        className={`mt-2 sm:mt-3 text-xs sm:text-sm text-red-600 ${centered ? "text-center" : ""}`}
+      >
+        {error}
+      </p>
+    );
+  }
+  return (
+    <div className="mt-3 rounded-xl border border-[#5E23DC]/20 bg-[#F5F0FF] p-3 sm:p-4 text-left">
+      <p className="text-sm font-semibold text-[#2A1466]">You already have an account</p>
+      <p className="mt-1 text-xs sm:text-sm text-gray-700">{error}</p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={onSignIn}
+          className="flex-1 rounded-lg bg-[#5E23DC] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4b1cc0]"
+        >
+          Sign in
+        </button>
+        <button
+          type="button"
+          onClick={onChangeDetails}
+          className="flex-1 rounded-lg border border-[#5E23DC]/30 bg-white px-4 py-2 text-sm font-semibold text-[#5E23DC] transition hover:bg-[#F5F0FF]"
+        >
+          Use different details
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -126,6 +163,12 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [existingAccount, setExistingAccount] = useState(false);
+  // Sets the error text; existing=true means the phone/email already has an account.
+  const showError = useCallback((message, existing = false) => {
+    setError(message);
+    setExistingAccount(Boolean(existing));
+  }, []);
   const [successMessage, setSuccessMessage] = useState("");
   const [whatsappSent, setWhatsappSent] = useState(true);
   const [resendIn, setResendIn] = useState(0);
@@ -140,7 +183,7 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
     setConfirmPassword("");
     setShowPassword(false);
     setOtp("");
-    setError("");
+    showError("");
     setSuccessMessage("");
     setWhatsappSent(true);
     setLoading(false);
@@ -164,38 +207,43 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
     return () => clearInterval(timer);
   }, [resendIn]);
 
+  const goToSignIn = () => {
+    onClose();
+    navigate("/login");
+  };
+
   const handleSendOtp = async () => {
     const trimmedFirst = firstName.trim();
     const trimmedLast = lastName.trim();
     const normalized = normalizePhone(phone);
 
     if (!trimmedFirst) {
-      setError("First name is required");
+      showError("First name is required");
       return;
     }
     if (!trimmedLast) {
-      setError("Last name is required");
+      showError("Last name is required");
       return;
     }
     if (normalized.length !== 10) {
-      setError("Enter a valid 10-digit WhatsApp number");
+      showError("Enter a valid 10-digit WhatsApp number");
       return;
     }
     if (!EMAIL_RE.test(email.trim())) {
-      setError("Enter a valid email address");
+      showError("Enter a valid email address");
       return;
     }
     if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+      showError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      showError("Passwords do not match");
       return;
     }
 
     setLoading(true);
-    setError("");
+    showError("");
     try {
       await sendPartnerJoinOtp(URI, normalized, email.trim().toLowerCase());
       setPhone(normalized);
@@ -203,7 +251,7 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
       setStep("otp");
       setResendIn(RESEND_SECONDS);
     } catch (e) {
-      setError(e.message || "Could not send OTP");
+      showError(e.message || "Could not send OTP", e.existingAccount);
     } finally {
       setLoading(false);
     }
@@ -212,12 +260,12 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
   const handleResend = async () => {
     if (resendIn > 0 || loading) return;
     setLoading(true);
-    setError("");
+    showError("");
     try {
       await sendPartnerJoinOtp(URI, phone, email.trim().toLowerCase());
       setResendIn(RESEND_SECONDS);
     } catch (e) {
-      setError(e.message || "Could not resend OTP");
+      showError(e.message || "Could not resend OTP", e.existingAccount);
     } finally {
       setLoading(false);
     }
@@ -225,12 +273,12 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
 
   const handleVerify = async () => {
     if (otp.length !== 6) {
-      setError("Enter the 6-digit OTP");
+      showError("Enter the 6-digit OTP");
       return;
     }
 
     setLoading(true);
-    setError("");
+    showError("");
     try {
       const result = await completePartnerJoin(URI, {
         firstName: firstName.trim(),
@@ -247,7 +295,7 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
       setWhatsappSent(result.whatsappSent !== false);
       setStep("success");
     } catch (e) {
-      setError(e.message || "Verification failed");
+      showError(e.message || "Verification failed", e.existingAccount);
     } finally {
       setLoading(false);
     }
@@ -410,9 +458,12 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
                 Show password
               </label>
 
-              {error ? (
-                <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-red-600">{error}</p>
-              ) : null}
+              <JoinErrorNotice
+                error={error}
+                existingAccount={existingAccount}
+                onSignIn={goToSignIn}
+                onChangeDetails={() => showError("")}
+              />
 
               <button
                 type="button"
@@ -481,7 +532,7 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
               onClick={() => {
                 setStep("phone");
                 setOtp("");
-                setError("");
+                showError("");
               }}
               className="ml-1 text-[#5E23DC] hover:text-[#4b1cc0]"
               aria-label="Change number"
@@ -494,9 +545,13 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
             <OtpInputs value={otp} onChange={setOtp} disabled={loading} />
           </div>
 
-          {error ? (
-            <p className="mt-2 text-center text-xs sm:text-sm text-red-600">{error}</p>
-          ) : null}
+          <JoinErrorNotice
+            error={error}
+            existingAccount={existingAccount}
+            centered
+            onSignIn={goToSignIn}
+            onChangeDetails={() => showError("")}
+          />
 
           <div className="mt-3 flex items-center justify-between gap-2 text-xs sm:text-sm">
             <button
@@ -513,7 +568,7 @@ export default function JoinPartnerModal({ isOpen, onClose }) {
               onClick={() => {
                 setStep("phone");
                 setOtp("");
-                setError("");
+                showError("");
               }}
               className="inline-flex items-center gap-1.5 font-medium text-[#5E23DC]"
             >

@@ -7,7 +7,9 @@ export async function sendPartnerJoinOtp(apiBase, phone, email) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.message || "Failed to send OTP");
+    const err = new Error(data.message || "Failed to send OTP");
+    err.existingAccount = res.status === 409;
+    throw err;
   }
   return data;
 }
@@ -23,7 +25,9 @@ export async function completePartnerJoin(
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.message || "Could not complete your application");
+    const err = new Error(data.message || "Could not complete your application");
+    err.existingAccount = res.status === 409;
+    throw err;
   }
   return data;
 }
